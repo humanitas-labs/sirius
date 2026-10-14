@@ -2,7 +2,7 @@ import Foundation
 import SiriusCore
 import SiriusProtocol
 
-// Codex through `codex app-server` (architecture.md §5.2, docs/research/codex.md).
+// Codex through `codex app-server` (architecture.md §5.2).
 // One warm app-server per agent, one thread, one turn per Message. The agent
 // reaches the user through sirius-mcp, configured as the MCP server "sirius"
 // with its tools approved, because Codex's sandbox without network access

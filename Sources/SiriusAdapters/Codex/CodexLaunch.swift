@@ -3,7 +3,7 @@ import SiriusProtocol
 
 // Where codex is and how app-server is started for Sirius.
 enum CodexLaunch {
-    // The copy ChatGPT.app ships (docs/research/codex.md §1): a small sh wrapper
+    // The copy ChatGPT.app ships: a small sh wrapper
     // that execs the CodexCLI.app beside it.
     static let bundledSuffix = "ChatGPT.app/Contents/Resources/codex-cli/bin/codex"
 
@@ -26,7 +26,7 @@ enum CodexLaunch {
     }
 
     // The three sirius-mcp tools. Each needs approval_mode "approve", or under
-    // approvalPolicy never its call fails at once (docs/research/codex.md §4).
+    // approvalPolicy never its call fails at once.
     static let tools = ["display", "notify", "speak"]
 
     // `codex app-server` with sirius-mcp as the MCP server "sirius". MCP

@@ -8,7 +8,7 @@ import SiriusProtocol
 // Permissions are auto mode plus `Bash(sirius:*)`: the
 // agent does its normal work with the user's own setup, a headless agent has
 // no one to prompt, and auto's classifier decides instead of a person. It can
-// always reach the user (docs/research/claude.md, item 3).
+// always reach the user.
 //
 // Claude also starts turns by itself: when a background agent it launched
 // finishes, the CLI runs a turn with no line from us (checked 2026.10.10,

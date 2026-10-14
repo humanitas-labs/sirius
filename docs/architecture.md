@@ -111,17 +111,17 @@ The adapter also hands the agent its environment (`SIRIUS_SOCKET`) and the instr
 
 ### 5.1 — Claude Code, warm headless
 
-Proposed for launch. Sirius starts one `claude -p --input-format stream-json --output-format stream-json` per agent when it launches and keeps it running, so each Message skips process start and session reload. Measured warm turns took 2.4–8.2 s, about 4 s typical, against 5.2–6.0 s for a cold resume; the model turn dominates ([research/claude.md](research/claude.md)). Permissions are `--permission-mode auto --allowedTools "Bash(sirius:*)"`. The agent runs with the user's own setup (MCP servers, settings, `CLAUDE.md`) and does its normal work; with no one to prompt, auto mode's classifier approves or refuses each action, and `sirius` is always allowed so the agent can reach the user.
+Proposed for launch. Sirius starts one `claude -p --input-format stream-json --output-format stream-json` per agent when it launches and keeps it running, so each Message skips process start and session reload. Measured warm turns took 2.4–8.2 s, about 4 s typical, against 5.2–6.0 s for a cold resume; the model turn dominates. Permissions are `--permission-mode auto --allowedTools "Bash(sirius:*)"`. The agent runs with the user's own setup (MCP servers, settings, `CLAUDE.md`) and does its normal work; with no one to prompt, auto mode's classifier approves or refuses each action, and `sirius` is always allowed so the agent can reach the user.
 
-Claude Code channels would replace this with a push into a background session, but a `--bg` session silently drops a development channel and the managed allowlist needs admin rights ([research/channel.md](research/channel.md)). Unresolved; the protocol is the same either way.
+Claude Code channels would replace this with a push into a background session, but a `--bg` session silently drops a development channel and the managed allowlist needs admin rights. Unresolved; the protocol is the same either way.
 
 ### 5.2 — Codex, app-server
 
-Spike done ([research/codex.md](research/codex.md)). Sirius starts `codex app-server` with `sirius-mcp` configured as an MCP server, its tools set to `approve`, and `thread/start {cwd: root, sandbox: workspace-write, approvalPolicy: never}`. Warm turns took 2.0–3.6 s.
+Spike done. Sirius starts `codex app-server` with `sirius-mcp` configured as an MCP server, its tools set to `approve`, and `thread/start {cwd: root, sandbox: workspace-write, approvalPolicy: never}`. Warm turns took 2.0–3.6 s.
 
 The workspace-write sandbox has network access: Sirius passes `-c sandbox_workspace_write.network_access=true` to the app-server, so it covers every thread and the worker agents Codex starts. If Claude gets network access, Codex does too. Claude Code runs with network access, and the two harnesses get the same reach.
 
-Codex uses `sirius-mcp` rather than `sirius` because its sandbox without network access refuses every Unix socket connect from shell commands, wherever the socket lives. MCP servers run outside the sandbox. Verified on codex 0.159.1 and the copy inside ChatGPT.app, 0.160.1. Network access now lets the shell connect too ([research/codex.md](research/codex.md) §3), but the reply path stays on `sirius-mcp` and does not depend on it.
+Codex uses `sirius-mcp` rather than `sirius` because its sandbox without network access refuses every Unix socket connect from shell commands, wherever the socket lives. MCP servers run outside the sandbox. Verified on codex 0.159.1 and the copy inside ChatGPT.app, 0.160.1. Network access now lets the shell connect too, but the reply path stays on `sirius-mcp` and does not depend on it.
 
 ### 5.3 — Claude Code, live session
 

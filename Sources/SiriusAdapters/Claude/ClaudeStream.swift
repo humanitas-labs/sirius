@@ -2,7 +2,7 @@ import Foundation
 import SiriusCore
 import SiriusProtocol
 
-// The subset of Claude Code's stream-json the adapter speaks (docs/research/claude.md):
+// The subset of Claude Code's stream-json the adapter speaks:
 // one JSON object per line each way. In: a `user` message per turn. Out: a
 // `system/init` at the start of every turn and a `result` at its end, both
 // carrying `session_id`. Everything else passes through to the observer only.
