@@ -3,17 +3,26 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sirius</title>
-<meta name="description" content="Sirius — talk to your agents from anywhere on your Mac.">
+<title>Sirius · Ambient intelligence for macOS</title>
+<meta name="description" content="Talk to your agents from anywhere on your Mac.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="canonical" href="https://trysirius.app/">
+<meta property="og:type" content="website">
 <meta property="og:url" content="https://trysirius.app/">
-<meta property="og:title" content="Sirius">
-<meta property="og:image" content="https://trysirius.app/assets/poster.jpg">
+<meta property="og:title" content="Ambient intelligence for macOS">
+<meta property="og:description" content="Talk to your agents from anywhere on your Mac.">
+<meta property="og:image" content="https://trysirius.app/assets/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Ambient intelligence for macOS">
+<meta name="twitter:description" content="Talk to your agents from anywhere on your Mac.">
+<meta name="twitter:image" content="https://trysirius.app/assets/og.png">
 </head>
 <body>
 <canvas id="sky" aria-hidden="true"></canvas>
@@ -25,14 +34,49 @@
 
 <header class="lockup" id="lockup">
   <h1 class="wordmark">SIRIUS</h1>
+  <p class="tagline">Ambient intelligence for macOS</p>
   <a class="download" href="/download">
     <svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path fill="currentColor" d="M6.61 3.75c-.52 0-1.32-.59-2.16-.57a3.2 3.2 0 0 0-2.7 1.64c-1.15 2-.3 4.95.83 6.57.55.8 1.2 1.68 2.06 1.65.83-.03 1.14-.54 2.14-.54 1 0 1.28.54 2.15.52.89-.01 1.46-.8 2-1.6.63-.92.89-1.81.9-1.86-.02 0-1.73-.67-1.75-2.64-.01-1.65 1.35-2.44 1.41-2.48a3.05 3.05 0 0 0-2.39-1.29c-1.09-.08-2 .6-2.5.6Zm1.83-1.67c.46-.55.77-1.32.68-2.08-.66.03-1.45.44-1.92.99-.43.49-.79 1.27-.7 2.02.73.06 1.48-.37 1.94-.93"/></svg>
-    <span>Download</span>
+    <span aria-live="polite">Download for free</span>
   </a>
 </header>
 
 <div class="label" id="label" aria-hidden="true">Scorpius</div>
 
 <script src="sky.js" type="module"></script>
+<!-- Vercel Web Analytics; /_vercel/insights only exists on Vercel, so locally the script 404s and va() just queues. -->
+<script>
+  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  // A Mac app can't be installed from a phone, so on touch and phone-sized screens Download opens the share
+  // sheet instead, or copies the link and says so for 2 s where there is none. style.css uses the same query.
+  const dl = document.querySelector(".download"), dlLabel = dl.querySelector("span");
+  const phone = matchMedia("(pointer: coarse), (max-width: 640px)");
+  // Say what the button does there: AirDrop on iOS and iPadOS (iPadOS reports itself as a Mac with touch),
+  // a plain send elsewhere, since Android has no AirDrop.
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1);
+  const label = () => (phone.matches ? (ios ? "AirDrop to Mac" : "Send to your Mac") : "Download for free");
+  const setLabel = () => { if (!copyLink.t) dlLabel.textContent = label(); };
+  const copyLink = async (url) => {
+    await navigator.clipboard.writeText(url);
+    dlLabel.textContent = "Link copied";
+    clearTimeout(copyLink.t);
+    copyLink.t = setTimeout(() => { copyLink.t = 0; dlLabel.textContent = label(); }, 2000);
+  };
+  setLabel(); phone.addEventListener("change", setLabel);
+  document.querySelector(".gh").addEventListener("click", () => va("event", { name: "github" }));
+  dl.addEventListener("click", async (e) => {
+    if (!phone.matches) { va("event", { name: "download" }); return; }
+    e.preventDefault();
+    const data = { title: "Sirius", text: document.querySelector('meta[name="description"]').content, url: "https://trysirius.app" };
+    try {
+      if (navigator.share) await navigator.share(data); else await copyLink(data.url);
+    } catch (err) {
+      if (err.name === "AbortError") return;   // the share sheet was dismissed
+      try { await copyLink(data.url); } catch { return; }
+    }
+    va("event", { name: "share" });
+  });
+</script>
+<script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html>
