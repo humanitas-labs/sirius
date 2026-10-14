@@ -7,7 +7,7 @@ import AppKit
 // It sits at the top centre, under the menu bar, not at the bottom with the
 // toast: speech is its own lane, so the two can be up at once and must not
 // overlap, and the top right is Notification Center's.
-// TODO(andrew): what speak's toast shows (captions or a speaking indicator,
+// TODO(copy): what speak's toast shows (captions or a speaking indicator,
 // captions here), its place, and the final look.
 @MainActor
 final class SpeechPanel: NSPanel {

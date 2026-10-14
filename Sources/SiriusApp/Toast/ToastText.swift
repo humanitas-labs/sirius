@@ -8,7 +8,7 @@ import AppKit
 // A bullet hangs: its wrapped lines start under the text, not the dot, which
 // is dimmer than the text. Items sit a little apart from each other and from
 // the line above them.
-// TODO(andrew): the indent, dot colour and spacing are a first pass.
+// TODO(copy): the indent, dot colour and spacing are a first pass.
 enum ToastText {
     static let bulletIndent: CGFloat = 15
     static let itemSpacing: CGFloat = 3

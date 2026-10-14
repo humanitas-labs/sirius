@@ -9,7 +9,7 @@
  * runtime: the app and the helpers validate against the JSON Schema generated from this file.
  *
  * Status markers: DECIDED (a recorded decision), AGREED (agreed in discussion, recorded here
- * first), PROPOSED (recommended, not agreed), TODO(andrew) for names or values that need a
+ * first), PROPOSED (recommended, not agreed), TODO(copy) for names or values that need a
  * maintainer's decision.
  */
 
@@ -65,7 +65,7 @@ export interface AgentRegistration {
   executable: string;
   /** Folder the agent works in, picked at setup. Changing it starts a new session. */
   root: string;
-  /** Default voice for speak. Absent: the app's default, TODO(andrew). Top-level until the
+  /** Default voice for speak. Absent: the app's default, TODO(copy). Top-level until the
    * registry spec is written; Sirius-only fields may move under a "sirius" key then (AGREED
    * 2026.10.09). */
   voice?: string;
@@ -241,7 +241,7 @@ export interface DisplayResult {
 export interface NotifyParams {
   /** Text blocks only (NOTIFY_CONTENT), joined with "\n" (PROPOSED). */
   content: Content;
-  /** TODO(andrew): keep, or always the agent's name. */
+  /** TODO(copy): keep, or always the agent's name. */
   title?: string;
 }
 
@@ -422,7 +422,7 @@ export const NOTIFY_CONTENT: ContentBlock["type"][] = ["text"];
  */
 
 /**
- * TODO(andrew): the values. Placeholders that show the shape and are mutually consistent.
+ * TODO(copy): the values. Placeholders that show the shape and are mutually consistent.
  * Text lengths count Unicode code points (PROPOSED), so every implementation counts the same.
  */
 export const LIMITS = {
@@ -516,7 +516,7 @@ export interface ErrorData {
  * sirius speak [--voice <name>] [--] <text>
  *
  * "--" ends options, so text starting with "-" is passed as `sirius display toast -- -1 failed`.
- * TODO(andrew): whether `display "text"` without a kind stays allowed
+ * TODO(copy): whether `display "text"` without a kind stays allowed
  * (the plan's AppleScript-style default); draft 1 requires the kind to remove the ambiguity.
  *
  * Exit codes:
@@ -572,7 +572,7 @@ export interface ErrorData {
  *  - `message` is the id used in the agent's log. The agent need not act on it.
  *  - The full instructions are given once at agent start (bundled skill or system prompt). One
  *    reply note follows the closing tag on every turn, so a long context never loses it
- *    (DECIDED 2026.10.09; TODO(andrew): the wording).
+ *    (DECIDED 2026.10.09; TODO(copy): the wording).
  *  - Attribute values and paths are XML-escaped. The user's words are not escaped; the wrapper
  *    is a convention for the agent, not a parsed format.
  *  - The closing tag repeats the message id, so user text containing "</sirius>" cannot end the
@@ -586,5 +586,5 @@ export interface ErrorData {
  *  - Commands from the agent are filed in its log against its current message, or its most
  *    recent one when no turn is running (late output after a turn ends). PROPOSED.
  *
- * TODO(andrew): the message id format (m_ plus a short random id is a placeholder).
+ * TODO(copy): the message id format (m_ plus a short random id is a placeholder).
  */

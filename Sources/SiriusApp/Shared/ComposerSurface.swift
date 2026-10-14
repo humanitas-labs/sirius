@@ -7,7 +7,7 @@ import AppKit
 // (ComposerBackground): NSGlassEffectView changes its surface when the window
 // loses focus. Kept for the dictation pill, which is to match the
 // composer's surface; the toast keeps its own style.
-// TODO(andrew): ComposerBackground still sets the same up inline; it can call
+// TODO(copy): ComposerBackground still sets the same up inline; it can call
 // this once it is free to change.
 @MainActor
 func installComposerSurface(in view: NSView, radius: CGFloat) {

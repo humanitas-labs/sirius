@@ -7,7 +7,7 @@ import AppKit
 // slow motion.
 @MainActor
 enum DictationPillDemo {
-    // TODO(andrew): the Sirius mark. The status item's sparkle for now.
+    // TODO(copy): the Sirius mark. The status item's sparkle for now.
     static let pill = DictationPill(mark: NSImage(systemSymbolName: "sparkle", accessibilityDescription: "Sirius"))
     private static var timer: Timer?
 

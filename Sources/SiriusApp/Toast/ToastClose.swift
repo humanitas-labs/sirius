@@ -5,7 +5,7 @@ import AppKit
 // is only the card, so the × is its own small window, a child of the toast's,
 // on the toast's glass. Shown and hidden with a short fade; clicking it
 // dismisses, and the pointer on it holds the toast as on the toast itself.
-// TODO(andrew): the size and the overhang are a first pass from his capture.
+// TODO(copy): the size and the overhang are a first pass from his capture.
 @MainActor
 final class ToastClose: NSPanel {
     var onClick: (() -> Void)?

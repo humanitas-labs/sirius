@@ -7,7 +7,7 @@ import SiriusProtocol
 // contains "</sirius>" cannot end the wrapper early.
 public enum MessageRenderer {
     // Every turn ends with it, so the agent never loses it to a long context.
-    // TODO(andrew): the wording.
+    // TODO(copy): the wording.
     public static let replyNote = "Reach the user only through display, notify or speak; your plain output is never shown."
 
     public static func render(_ message: Message) -> String {

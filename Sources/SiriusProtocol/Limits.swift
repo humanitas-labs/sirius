@@ -1,4 +1,4 @@
-// Placeholders that show the shape (TODO(andrew): the values). Text lengths
+// Placeholders that show the shape (TODO(copy): the values). Text lengths
 // count Unicode code points, so every implementation counts the same.
 public enum LimitName: String, Sendable, Codable {
     case maxRequestBytes, readDeadlineSeconds, maxConnectionsPerAgent, maxBlocks, maxTextChars

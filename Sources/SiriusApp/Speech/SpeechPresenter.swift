@@ -47,7 +47,7 @@ final class SpeechPresenter: NSObject, AVSpeechSynthesizerDelegate {
         return .queued(voice: resolution.voice.name, fallback: resolution.fallback)
     }
 
-    // TODO(andrew): which Apple voice is the app's default.
+    // TODO(copy): which Apple voice is the app's default.
     // Placeholder: the system's default voice for the current language.
     private static func appDefaultVoice(installed: [SpeechVoice]) -> SpeechVoice {
         if let voice = AVSpeechSynthesisVoice(language: AVSpeechSynthesisVoice.currentLanguageCode()) {

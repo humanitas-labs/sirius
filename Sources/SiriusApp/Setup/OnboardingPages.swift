@@ -97,14 +97,14 @@ struct OnboardingView: View {
         case .welcome:
             lockup
         case .agents:
-            StepPage(title: "Agents", // TODO(andrew): copy
-                     subtitle: "Choose where your agents will work.") { // TODO(andrew): copy
+            StepPage(title: "Agents", // TODO(copy): copy
+                     subtitle: "Choose where your agents will work.") { // TODO(copy): copy
                 AgentsRows(model: model)
             }
         case .permissions:
             ZStack(alignment: .topLeading) {
-                StepPage(title: "Permissions", // TODO(andrew): copy
-                         subtitle: "Allow these so you can hold fn and talk.") { // TODO(andrew): copy
+                StepPage(title: "Permissions", // TODO(copy): copy
+                         subtitle: "Allow these so you can hold fn and talk.") { // TODO(copy): copy
                     PermissionRows(grants: model.grants)
                 }
                 LockFooter()
@@ -117,7 +117,7 @@ struct OnboardingView: View {
                                  window: { [weak model] in model?.window })
                 }
                 if case .answering(_, let agent) = model.firstTurn {
-                    Text("\(agent) is answering…") // TODO(andrew): copy
+                    Text("\(agent) is answering…") // TODO(copy): copy
                         .font(.system(size: 12))
                         .foregroundStyle(NightSkyPalette.secondary)
                         .frame(width: OnboardingWindow.size.width)
@@ -270,10 +270,10 @@ private struct AgentRow: View {
             }
         } trailing: {
             if !agent.looking, agent.executable == nil {
-                Text("Not installed") // TODO(andrew): copy
+                Text("Not installed") // TODO(copy): copy
                     .font(.system(size: 12))
                     .foregroundStyle(NightSkyPalette.secondary)
-                    .help("\(AgentDetector.command(for: agent.harness)) was not found") // TODO(andrew): copy
+                    .help("\(AgentDetector.command(for: agent.harness)) was not found") // TODO(copy): copy
             } else {
                 Button { if let window = window() { agent.chooseFolder(in: window) } } label: {
                     HStack(spacing: 7) {
@@ -324,19 +324,19 @@ private struct PermissionRows: View {
     @ObservedObject var grants: GrantsModel
 
     var body: some View {
-        StepRow(label: "Microphone") { // TODO(andrew): copy
+        StepRow(label: "Microphone") { // TODO(copy): copy
             icon("mic")
         } trailing: {
             permission(.microphone)
         }
-        StepRow(label: "Accessibility") { // TODO(andrew): copy
+        StepRow(label: "Accessibility") { // TODO(copy): copy
             icon("accessibility")
         } trailing: {
             permission(.accessibility)
         }
         if grants.parrotRunning {
             // Sirius owns fn and Parrot is being retired. Not in the frames.
-            Text("Quit Parrot so fn isn't handled twice.") // TODO(andrew): copy
+            Text("Quit Parrot so fn isn't handled twice.") // TODO(copy): copy
                 .font(.system(size: 12))
                 .foregroundStyle(NightSkyPalette.secondary)
                 .padding(.top, 6)
@@ -356,7 +356,7 @@ private struct PermissionRows: View {
                 Image(systemName: "checkmark")
                     .font(.system(size: 10, weight: .semibold))
                     .frame(width: 15, height: 15)
-                Text("Allowed") // TODO(andrew): copy
+                Text("Allowed") // TODO(copy): copy
                     .font(.system(size: 12))
             }
             .foregroundStyle(NightSkyPalette.success)
@@ -488,7 +488,7 @@ private struct SkipLink: View {
 // The "?" bottom-left on every page: an 18 pt ring with the glyph,
 // opening the docs, in a 24 pt target.
 private struct HelpButton: View {
-    // TODO(andrew): the docs' address; a placeholder.
+    // TODO(copy): the docs' address; a placeholder.
     static let docs = URL(string: "https://sirius.app/docs")!
     static let ring: CGFloat = 18
     @State private var hovering = false
@@ -505,7 +505,7 @@ private struct HelpButton: View {
         }
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
-        .help("Help") // TODO(andrew): copy
+        .help("Help") // TODO(copy): copy
     }
 }
 
@@ -536,8 +536,8 @@ private struct NextArrow: View {
         .opacity(enabled ? 1 : 0.3)
         .onHover { hovering = $0 }
         .animation(.easeOut(duration: 0.15), value: hovering && enabled)
-        .help("Next") // TODO(andrew): copy
-        .accessibilityLabel("Next") // TODO(andrew): copy
+        .help("Next") // TODO(copy): copy
+        .accessibilityLabel("Next") // TODO(copy): copy
     }
 }
 
@@ -637,7 +637,7 @@ private struct StepDots: View {
                         if inside { hovered = step } else if hovered == step { hovered = nil }
                     }
                     .accessibilityElement()
-                    .accessibilityLabel("Step \((step.dot ?? 0) + 1) of \(OnboardingStep.dotted.count)") // TODO(andrew): copy
+                    .accessibilityLabel("Step \((step.dot ?? 0) + 1) of \(OnboardingStep.dotted.count)") // TODO(copy): copy
                     .accessibilityAddTraits(step == current ? [.isButton, .isSelected] : .isButton)
                     .accessibilityAction { select(step) }
             }

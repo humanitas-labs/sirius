@@ -255,7 +255,7 @@ public actor AgentHost {
             let log = try storage.openLog()
             if !log.recovered.isEmpty {
                 report("Sirius: \(id): marked \(log.recovered.count) unfinished message(s) interrupted")
-                // TODO(andrew): a toast that offers to resend the cut-off turn
+                // TODO(copy): a toast that offers to resend the cut-off turn
                 // (#1, fix 2). It needs an action on the toast, which the toast
                 // panel does not have yet; until then the turn stays interrupted.
             }
@@ -289,7 +289,7 @@ public actor AgentHost {
     }
 
     // What the user is told, bounded: the reasons can carry a stderr tail.
-    // TODO(andrew): wording.
+    // TODO(copy): wording.
     static func alertText(didNotStart reason: String) -> String {
         "Didn't start: " + bounded(reason)
     }

@@ -143,7 +143,7 @@ public enum Shortcuts {
     // The sticky toast when the compose shortcut could not be registered,
     // in the user's own glyphs ("⌘⇧J").
     public static func takenMessage(_ glyphs: String) -> String {
-        "\(glyphs) is taken by another app. Pick a new compose shortcut in Settings." // TODO(andrew): copy
+        "\(glyphs) is taken by another app. Pick a new compose shortcut in Settings." // TODO(copy): copy
     }
 
     public static func holdKey(in defaults: UserDefaults) -> HoldKey {

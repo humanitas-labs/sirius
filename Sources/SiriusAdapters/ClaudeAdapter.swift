@@ -474,7 +474,7 @@ public enum ClaudeAdapterError: Error, Equatable, Sendable, CustomStringConverti
 }
 
 extension ClaudeAdapterError: UserFacingError {
-    // TODO(andrew): copy.
+    // TODO(copy): copy.
     public var userMessage: String? {
         switch self {
         case .tooOld(let version, _):

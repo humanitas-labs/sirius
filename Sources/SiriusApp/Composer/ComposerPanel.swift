@@ -40,7 +40,7 @@ final class ComposerPanel: NSPanel {
     private let agentButton = NSButton()
     // A bolt left of the logo when the agent runs in fast mode, as the
     // ChatGPT app marks Fast.
-    // TODO(andrew): size, colour and offset are a first pass.
+    // TODO(copy): size, colour and offset are a first pass.
     private let fastBadge = NSImageView()
     private let sendButton = NSButton()
     // Attached files as thumbnails above the text, the panel's bottom edge
@@ -157,7 +157,7 @@ final class ComposerPanel: NSPanel {
         NotificationCenter.default.addObserver(self, selector: #selector(textChanged),
                                                name: NSText.didChangeNotification, object: textView)
 
-        // TODO(andrew): not in the Figma design; tiles 8 apart, on the text's
+        // TODO(copy): not in the Figma design; tiles 8 apart, on the text's
         // left edge.
         tiles.orientation = .horizontal
         tiles.spacing = 8
@@ -459,7 +459,7 @@ enum Palette {
     static let secondary = NSColor(white: 1, alpha: 0.45)
     // The send pill's glyph, the design's #E2E3E4.
     static let glyph = NSColor(srgbRed: 0xE2 / 255, green: 0xE3 / 255, blue: 0xE4 / 255, alpha: 1)
-    // TODO(andrew): not in the design; the caret's blue, dimmed.
+    // TODO(copy): not in the design; the caret's blue, dimmed.
     static let selection = NSColor(srgbRed: 0xB5 / 255, green: 0xD1 / 255, blue: 0xFF / 255, alpha: 0.3)
 }
 

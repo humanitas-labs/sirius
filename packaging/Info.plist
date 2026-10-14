@@ -34,7 +34,7 @@
 	<!-- No automatic icons on standard menu items (macOS 26 puts an x box on Quit). -->
 	<key>NSMenuEnableActionImages</key>
 	<false/>
-	<!-- Dictation: hold fn and speak (dictation.md). Asked for only from the Allow button in setup, never unannounced. TODO(andrew): the copy macOS shows in the microphone prompt. -->
+	<!-- Dictation: hold fn and speak (dictation.md). Asked for only from the Allow button in setup, never unannounced. TODO(copy): the copy macOS shows in the microphone prompt. -->
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Sirius listens while you hold fn, to send what you say to your agents or type it at the cursor.</string>
 	<!-- In-app updates, as Parrot's. The appcast is a GitHub release asset, written by scripts/make-release.sh; latest/download always serves the newest release's. -->

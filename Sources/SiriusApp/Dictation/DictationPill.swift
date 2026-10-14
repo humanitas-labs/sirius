@@ -108,7 +108,7 @@ final class DictationPill: DictationObserver {
 
     // A paste hold (⌃fn): a text-cursor glyph leads the bars, so the press
     // reads as typing rather than talking to an agent.
-    // TODO(andrew): the paste cue is a first pass.
+    // TODO(copy): the paste cue is a first pass.
     var pastes: Bool {
         get { model.pastes }
         set {
@@ -297,7 +297,7 @@ final class DictationPill: DictationObserver {
 
     // A model download or warm-up: `fraction` in 0...1 with a short label;
     // nil hides the pill if it is showing progress.
-    // TODO(andrew): the label copy ("Downloading speech model" in the Debug
+    // TODO(copy): the label copy ("Downloading speech model" in the Debug
     // preview), and whether warm-up gets its own phase.
     func progress(_ fraction: Double?, label: String) {
         guard let fraction else {
@@ -311,7 +311,7 @@ final class DictationPill: DictationObserver {
 
     // How long the sparkle takes to come in from its blur: OnboardingIntro's
     // reveal curve, shorter, as the pill springs in around it.
-    // TODO(andrew): the launch cue is a first pass.
+    // TODO(copy): the launch cue is a first pass.
     nonisolated static let baseRevealDuration: TimeInterval = 0.7
     static var revealDuration: TimeInterval { baseRevealDuration * SpatialMotion.timeScale }
     // How long a faded open or close takes, under Reduce Motion.
@@ -738,7 +738,7 @@ struct PillView: View {
     private var scale: CGFloat { model.visible || model.fades ? 1 : 0 }
 
     // The paste cue's glyph and its gap to the bars.
-    // TODO(andrew): the paste cue is a first pass.
+    // TODO(copy): the paste cue is a first pass.
     static let cueSize: CGFloat = 11
     static let cueSpacing: CGFloat = 6
 
@@ -786,7 +786,7 @@ struct PillView: View {
         case .recording:
             HStack(spacing: Self.cueSpacing) {
                 if model.pastes {
-                    // TODO(andrew): the paste cue is a first pass.
+                    // TODO(copy): the paste cue is a first pass.
                     Image(systemName: "character.cursor.ibeam")
                         .font(.system(size: Self.cueSize, weight: .medium))
                         .foregroundColor(pillText.opacity(0.75))
@@ -979,7 +979,7 @@ private struct ProgressRow: View {
 // The launch cue's sparkle: the menu bar's glyph in white, coming in from a
 // blur with a little scale and opacity, as the onboarding's lockup does
 // (OnboardingPages' lockup, OnboardingIntro's reveal).
-// TODO(andrew): the launch cue is a first pass.
+// TODO(copy): the launch cue is a first pass.
 private struct LaunchSparkle: View {
     let reveal: Double
     var color: Color = .white
@@ -1004,7 +1004,7 @@ private struct LaunchSparkle: View {
 // follows (ProgressRow). It comes in from a slight blur and rises a few
 // points to its place, as the onboarding's lockup does (OnboardingPages'
 // lockup); `reveal` 0 to 1.
-// TODO(andrew): the launch cue is a first pass.
+// TODO(copy): the launch cue is a first pass.
 private struct LaunchWord: View {
     let reveal: Double
 

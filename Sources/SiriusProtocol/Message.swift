@@ -2,7 +2,7 @@
 // for the agent (the <sirius> wrapper, MessageRenderer in SiriusCore) is
 // the adapter layer's job.
 public struct Message: Equatable, Sendable, Codable {
-    // TODO(andrew): the id format; "m_" plus a short random id for now.
+    // TODO(copy): the id format; "m_" plus a short random id for now.
     public var id: String
     public var agent: String
     // The user's words, verbatim.

@@ -28,7 +28,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     // Compose, above Settings…, with the current shortcut as its hint.
     func makeComposeItem() -> NSMenuItem {
-        let item = NSMenuItem(title: "Compose", action: #selector(compose(_:)), keyEquivalent: "") // TODO(andrew): copy
+        let item = NSMenuItem(title: "Compose", action: #selector(compose(_:)), keyEquivalent: "") // TODO(copy): copy
         item.target = self
         updateComposeItem(item)
         return item
@@ -48,7 +48,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         // shows "Check for Updates…" only once they run.
         Updater.start()
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        // TODO(andrew): the menu-bar icon.
+        // TODO(copy): the menu-bar icon.
         item.button?.image = NSImage(systemSymbolName: "sparkle", accessibilityDescription: "Sirius")
         let menu = NSMenu()
         menu.delegate = self

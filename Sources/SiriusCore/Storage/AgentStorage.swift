@@ -99,7 +99,7 @@ public struct AgentStorage: Sendable {
 }
 
 public enum MessageID {
-    // TODO(andrew): the id format. "m_" plus 8 lowercase base-36 characters
+    // TODO(copy): the id format. "m_" plus 8 lowercase base-36 characters
     // for now (about 41 bits), enough to never collide within one agent's log.
     public static func make() -> String {
         let alphabet = Array("abcdefghijklmnopqrstuvwxyz0123456789")

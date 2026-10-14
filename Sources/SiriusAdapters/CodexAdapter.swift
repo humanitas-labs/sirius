@@ -244,7 +244,7 @@ public enum CodexAdapterError: Error, Equatable, CustomStringConvertible {
 }
 
 extension CodexAdapterError: UserFacingError {
-    // TODO(andrew): copy. Generic on how to update: Codex comes from npm,
+    // TODO(copy): copy. Generic on how to update: Codex comes from npm,
     // Homebrew, its standalone installer or ChatGPT.app, and `codex update`
     // is not in every release.
     public var userMessage: String? {

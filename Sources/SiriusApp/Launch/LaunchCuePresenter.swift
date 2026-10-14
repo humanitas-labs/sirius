@@ -13,7 +13,7 @@ import SiriusCore
 // Motion too, which is about motion, not sound; a press stops it if Glass
 // has not landed.
 // Never takes focus: the pill is a non-activating, click-through panel.
-// TODO(andrew): the launch cue is a first pass.
+// TODO(copy): the launch cue is a first pass.
 @MainActor
 final class LaunchCuePresenter {
     private var dictation: DictationService?

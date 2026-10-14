@@ -96,15 +96,15 @@ final class AgentChoice: ObservableObject, Identifiable {
         panel.canChooseFiles = false
         panel.canCreateDirectories = true
         panel.allowsMultipleSelection = false
-        panel.prompt = "Choose" // TODO(andrew): copy
-        panel.message = "The folder \(name) works in" // TODO(andrew): copy
+        panel.prompt = "Choose" // TODO(copy): copy
+        panel.message = "The folder \(name) works in" // TODO(copy): copy
         if let root { panel.directoryURL = URL(fileURLWithPath: root, isDirectory: true) }
         panel.beginSheetModal(for: window) { [weak self] response in
             guard let self, response == .OK, let url = panel.url else { return }
             guard self.detector.isAcceptableRoot(url.path) else {
                 let alert = NSAlert()
-                alert.messageText = "Choose a narrower folder" // TODO(andrew): copy
-                // TODO(andrew): copy
+                alert.messageText = "Choose a narrower folder" // TODO(copy): copy
+                // TODO(copy): copy
                 alert.informativeText = "An agent can't work in your home folder or the whole disk. Pick a project or workspace folder."
                 alert.beginSheetModal(for: window)
                 return

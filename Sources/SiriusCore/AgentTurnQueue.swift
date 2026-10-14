@@ -238,7 +238,7 @@ extension AgentTurnQueue {
         return kept
     }
 
-    // TODO(andrew): wording.
+    // TODO(copy): wording.
     static func missingAttachmentNote(_ path: String) -> String {
         "[Sirius: attachment missing: \(path)]"
     }

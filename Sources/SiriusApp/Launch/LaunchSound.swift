@@ -16,7 +16,7 @@ import SiriusCore
 // device: the engine's inputNode is never touched, so it asks for no
 // microphone, and the dictation's engine is a separate one. A muted output
 // mutes it, as it does every sound.
-// TODO(andrew): the launch cue is a first pass.
+// TODO(copy): the launch cue is a first pass.
 @MainActor
 final class LaunchSound {
     private static let directory = "/System/Library/Sounds"

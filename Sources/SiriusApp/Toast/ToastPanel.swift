@@ -15,7 +15,7 @@ import AppKit
 // swaps in place: the old line blurs, fades and drops in 150 ms, a 70 ms
 // beat, then the new one rises out of the blur over 310 ms while the capsule
 // eases to its height. Queued toasts take their turn through the same swap.
-// TODO(andrew): the colour effect, the final metrics, and whether to show
+// TODO(copy): the colour effect, the final metrics, and whether to show
 // how many toasts are waiting (the "+N more" line went with the agent line).
 @MainActor
 final class ToastPanel: NSPanel {

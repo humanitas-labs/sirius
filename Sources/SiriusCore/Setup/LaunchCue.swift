@@ -9,7 +9,7 @@ import Foundation
 // launch; a first-time download is not waited for, as it has its own
 // "Preparing speech…" in the pill. The pill stays long enough never to
 // flicker and leaves on time even when something is slow.
-// TODO(andrew): the launch cue is a first pass.
+// TODO(copy): the launch cue is a first pass.
 public enum LaunchCue {
     // The least time the pill shows, so a fast launch does not flicker it
     // and "Listening.", in from 1.25 s, holds long enough to read: 3.7 s

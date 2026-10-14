@@ -131,7 +131,7 @@ final class ShortcutsModel: ObservableObject {
             compose = combo
             state = .idle
         case .needsModifier:
-            state = .recording(hint: "Add ⌘, ⌃ or ⌥") // TODO(andrew): copy
+            state = .recording(hint: "Add ⌘, ⌃ or ⌥") // TODO(copy): copy
         case .takenByMacOS:
             refuse("Taken by macOS")
         case .takenByApp:

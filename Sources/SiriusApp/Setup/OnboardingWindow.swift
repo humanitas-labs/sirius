@@ -103,7 +103,7 @@ final class OnboardingWindow {
             backing: .buffered, defer: false
         )
         window.contentView = Self.surface(around: OnboardingView(model: model))
-        window.title = "Welcome to Sirius" // TODO(andrew): copy
+        window.title = "Welcome to Sirius" // TODO(copy): copy
         window.isMovableByWindowBackground = true
         window.isReleasedWhenClosed = false
         window.delegate = delegate
@@ -292,7 +292,7 @@ final class OnboardingWindow {
         }
         guard failures.isEmpty else {
             let alert = NSAlert()
-            alert.messageText = "Couldn't save the agents" // TODO(andrew): copy
+            alert.messageText = "Couldn't save the agents" // TODO(copy): copy
             alert.informativeText = failures.joined(separator: "\n")
             if let window { alert.beginSheetModal(for: window) } else { alert.runModal() }
             return false
