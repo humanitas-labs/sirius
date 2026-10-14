@@ -1,0 +1,22 @@
+{
+  "description": "alert on dialog: the unavailable kind first",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "display",
+    "params": {
+      "kind": "dialog",
+      "content": "hi",
+      "alert": true
+    }
+  },
+  "expect": {
+    "error": -32003,
+    "id": "1",
+    "data": {
+      "kind": "dialog",
+      "method": "display"
+    }
+  }
+}

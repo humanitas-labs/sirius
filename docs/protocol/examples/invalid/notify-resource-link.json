@@ -1,0 +1,26 @@
+{
+  "description": "notify accepts text only",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "notify",
+    "params": {
+      "content": [
+        {
+          "type": "resource_link",
+          "uri": "file:///tmp/x",
+          "name": "x"
+        }
+      ]
+    }
+  },
+  "expect": {
+    "error": -32004,
+    "id": "1",
+    "data": {
+      "type": "resource_link",
+      "method": "notify"
+    }
+  }
+}

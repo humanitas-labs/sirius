@@ -1,0 +1,14 @@
+{
+  "description": "An unknown method",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "dialog",
+    "params": {}
+  },
+  "expect": {
+    "error": -32601,
+    "id": "1"
+  }
+}

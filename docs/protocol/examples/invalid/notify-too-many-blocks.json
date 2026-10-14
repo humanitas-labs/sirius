@@ -1,0 +1,154 @@
+{
+  "description": "One past maxBlocks",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "notify",
+    "params": {
+      "content": [
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        }
+      ]
+    }
+  },
+  "expect": {
+    "error": -32005,
+    "id": "1",
+    "data": {
+      "value": 33,
+      "limit": "maxBlocks",
+      "method": "notify"
+    }
+  }
+}

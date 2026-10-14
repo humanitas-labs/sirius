@@ -1,0 +1,19 @@
+{
+  "description": "Unknown version and unknown method: version first",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 2,
+    "id": "1",
+    "method": "shout",
+    "params": {}
+  },
+  "expect": {
+    "error": -32001,
+    "id": "1",
+    "data": {
+      "supported": [
+        1
+      ]
+    }
+  }
+}

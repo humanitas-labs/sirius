@@ -1,0 +1,21 @@
+{
+  "description": "Unknown kind and malformed content: kind first",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "display",
+    "params": {
+      "kind": "banner",
+      "content": 3
+    }
+  },
+  "expect": {
+    "error": -32002,
+    "id": "1",
+    "data": {
+      "kind": "banner",
+      "method": "display"
+    }
+  }
+}

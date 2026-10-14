@@ -1,0 +1,20 @@
+{
+  "description": "title: null",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "notify",
+    "params": {
+      "content": "hi",
+      "title": null
+    }
+  },
+  "expect": {
+    "error": -32602,
+    "id": "1",
+    "data": {
+      "method": "notify"
+    }
+  }
+}

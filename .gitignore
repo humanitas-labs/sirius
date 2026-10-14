@@ -1,0 +1,14 @@
+.build/
+.swiftpm/
+*.xcodeproj
+*.xcworkspace
+.DS_Store
+build/
+dist/
+.env*
+.claude/worktrees/
+# Rendered from GitHub issues; GitHub is the truth.
+.issues/
+# Rendered locally; not part of the repo.
+.journal/
+.tasks/

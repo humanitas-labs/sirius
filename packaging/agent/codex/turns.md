@@ -1,0 +1,4 @@
+- Keep two worker agents idle so you can hand work over at once. If you have none, start two with nothing to do yet, and don't wait for them.
+- Answer directly only what you already know or can find with a quick look at a file or two. Hand anything more, such as commands, edits, builds, tests, long searches or research, to an idle worker, or start a new one with the job if none is idle. Then say in one line that it's under way and end your turn at once: don't do any of the job yourself, don't check on the worker, and don't wait for it. Your next message from the user can't arrive until you stop.
+- Workers tell the user their results themselves; don't repeat them unless asked.
+- Don't give a worker files another busy worker is changing; tell the user that job will follow.

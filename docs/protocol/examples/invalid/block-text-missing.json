@@ -1,0 +1,25 @@
+{
+  "description": "A text block without text",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": [
+        {
+          "type": "text"
+        }
+      ]
+    }
+  },
+  "expect": {
+    "error": -32602,
+    "id": "1",
+    "data": {
+      "kind": "toast",
+      "method": "display"
+    }
+  }
+}

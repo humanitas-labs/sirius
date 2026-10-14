@@ -1,0 +1,36 @@
+{
+  "description": "A well-formed icon passes shape; notify still refuses the link",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "notify",
+    "params": {
+      "content": [
+        {
+          "type": "resource_link",
+          "uri": "file:///tmp/x",
+          "name": "x",
+          "icons": [
+            {
+              "src": "x.png",
+              "mimeType": "image/png",
+              "sizes": [
+                "48x48"
+              ],
+              "theme": "dark"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "expect": {
+    "error": -32004,
+    "id": "1",
+    "data": {
+      "type": "resource_link",
+      "method": "notify"
+    }
+  }
+}

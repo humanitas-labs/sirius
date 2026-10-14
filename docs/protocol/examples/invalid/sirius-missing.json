@@ -1,0 +1,21 @@
+{
+  "description": "No sirius tag",
+  "frame": {
+    "jsonrpc": "2.0",
+    "id": "1",
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": "hi"
+    }
+  },
+  "expect": {
+    "error": -32001,
+    "id": "1",
+    "data": {
+      "supported": [
+        1
+      ]
+    }
+  }
+}

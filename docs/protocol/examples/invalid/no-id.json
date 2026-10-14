@@ -1,0 +1,15 @@
+{
+  "description": "No id: a notification, not executed, no response",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": "hi"
+    }
+  },
+  "expect": {
+    "noResponse": true
+  }
+}

@@ -1,0 +1,13 @@
+{
+  "description": "PENDING: sirius 2 then sirius 1; the first value wins today",
+  "raw": "{\"jsonrpc\":\"2.0\",\"sirius\":2,\"sirius\":1,\"id\":\"1\",\"method\":\"display\",\"params\":{\"kind\":\"toast\",\"content\":\"hi\"}}",
+  "expect": {
+    "error": -32001,
+    "id": "1",
+    "data": {
+      "supported": [
+        1
+      ]
+    }
+  }
+}

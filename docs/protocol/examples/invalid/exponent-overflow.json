@@ -1,0 +1,8 @@
+{
+  "description": "PENDING: 1e400 in an unknown field fails the parse today",
+  "raw": "{\"jsonrpc\":\"2.0\",\"sirius\":1,\"id\":\"1\",\"x\":1e400,\"method\":\"display\",\"params\":{\"kind\":\"toast\",\"content\":\"hi\"}}",
+  "expect": {
+    "error": -32700,
+    "id": null
+  }
+}

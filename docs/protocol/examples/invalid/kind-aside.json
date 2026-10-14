@@ -1,0 +1,21 @@
+{
+  "description": "aside is not built",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "display",
+    "params": {
+      "kind": "aside",
+      "content": "hi"
+    }
+  },
+  "expect": {
+    "error": -32003,
+    "id": "1",
+    "data": {
+      "kind": "aside",
+      "method": "display"
+    }
+  }
+}

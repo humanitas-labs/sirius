@@ -1,0 +1,26 @@
+{
+  "description": "A string is never parsed again",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": "[{\"type\":\"image\"}]"
+    }
+  },
+  "expect": {
+    "result": "display",
+    "id": "1",
+    "params": {
+      "content": [
+        {
+          "type": "text",
+          "text": "[{\"type\":\"image\"}]"
+        }
+      ],
+      "kind": "toast"
+    }
+  }
+}

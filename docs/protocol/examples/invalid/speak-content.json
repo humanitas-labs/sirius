@@ -1,0 +1,19 @@
+{
+  "description": "speak takes text, not content",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "speak",
+    "params": {
+      "content": "hi"
+    }
+  },
+  "expect": {
+    "error": -32602,
+    "id": "1",
+    "data": {
+      "method": "speak"
+    }
+  }
+}

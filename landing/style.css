@@ -1,0 +1,57 @@
+:root {
+  --text-primary: #e6faff;
+  --text-muted: #99b2b6;
+  --s: 1; /* world px -> CSS px, set by sky.js */
+}
+* { box-sizing: border-box; margin: 0; }
+html, body { background: #010206; color: var(--text-primary); height: 100%; overflow: hidden; overscroll-behavior: none; }
+body { font-family: Inter, system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+
+#sky, .fallback {
+  position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100lvh; display: block;
+}
+.fallback { object-fit: cover; }
+
+/* The lockup is laid out in world px at its pan-end position and scaled as one unit. */
+.lockup {
+  position: fixed; left: 0; top: 0; width: 1512px; height: 982px;
+  transform-origin: 0 0; pointer-events: none;
+}
+.lockup > * { position: absolute; }
+.wordmark, .download, .gh { opacity: 0; }
+.wordmark { filter: blur(14px); transform: scale(1.015); transition: opacity 2.2s cubic-bezier(.2,.6,.2,1), filter 2.2s cubic-bezier(.2,.6,.2,1), transform 2.6s cubic-bezier(.2,.6,.2,1); }
+.download, .gh { transform: translateY(4px); transition: opacity 1s ease 1.5s, transform 1.2s cubic-bezier(.2,.6,.2,1) 1.5s, background .2s ease, box-shadow .25s ease; }
+.settled .wordmark { opacity: 1; filter: blur(0); transform: none; }
+.wordmark, .download { margin-top: var(--drop, 0px); }  /* set by sky.js layout() */
+.settled .download, .settled .gh { opacity: 1; transform: none; }
+.wordmark {
+  left: 0; width: 1512px; top: 368px; height: 78px; line-height: 78px;
+  text-align: center; font: 500 64px/78px "Cormorant Garamond", serif;
+  letter-spacing: 0.62em; text-indent: 0.62em; color: var(--text-primary);
+  text-shadow: 0 0 18px rgba(181, 209, 255, 0.35);  /* Figma 38:2817: drop shadow, blur 18, spread 0, #B5D1FF at 35% */
+}
+.download {
+  left: 700px; top: 489px; height: 33.4px; padding: 0 13.9px; gap: 7px;
+  display: inline-flex; align-items: center; pointer-events: auto;
+  border-radius: 999px; text-decoration: none; color: #050506;
+  font: 500 13px/16px Inter, sans-serif; letter-spacing: 0.01em;
+  background: linear-gradient(180deg, #ffffff, #d9e0eb);
+  box-shadow: 0 0 0 0.5px rgba(255,255,255,.12), 0 1px 2px rgba(0,0,0,.4), 0 6px 24px rgba(120,160,255,.10), inset 0 1px 0 rgba(255,255,255,.9), inset 0 -1px 0 rgba(0,0,0,.06);
+}
+.settled .download:hover { transition-delay: 0s; transform: translateY(-1px); box-shadow: 0 0 0 0.5px rgba(255,255,255,.2), 0 2px 4px rgba(0,0,0,.4), 0 8px 32px rgba(140,180,255,.22), inset 0 1px 0 #fff, inset 0 -1px 0 rgba(0,0,0,.06); }
+
+.gh {
+  position: fixed; top: 24px; right: 24px; width: 32px; height: 32px; z-index: 2;
+  display: grid; place-items: center; border-radius: 8px; color: var(--text-primary);
+}
+.gh:hover { background: rgba(255,255,255,.08); }
+
+
+.label {
+  position: fixed; left: 0; top: 0; pointer-events: none;
+  font: 400 11px/1 Inter, sans-serif; letter-spacing: .24em; text-transform: uppercase;
+  color: var(--text-muted); opacity: 0; transition: opacity .6s ease;
+}
+.label.on { opacity: .9; }
+
+@media (prefers-reduced-motion: reduce) { .wordmark, .download, .gh { transition: none; filter: none; } }

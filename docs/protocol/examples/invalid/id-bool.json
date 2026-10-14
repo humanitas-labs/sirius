@@ -1,0 +1,17 @@
+{
+  "description": "A boolean id",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": true,
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": "hi"
+    }
+  },
+  "expect": {
+    "error": -32600,
+    "id": null
+  }
+}

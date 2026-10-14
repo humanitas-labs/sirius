@@ -1,0 +1,17 @@
+{
+  "description": "Wrong jsonrpc and wrong sirius: jsonrpc first",
+  "frame": {
+    "jsonrpc": "1.0",
+    "sirius": 2,
+    "id": "1",
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": "hi"
+    }
+  },
+  "expect": {
+    "error": -32600,
+    "id": "1"
+  }
+}

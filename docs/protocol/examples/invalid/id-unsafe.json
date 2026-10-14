@@ -1,0 +1,8 @@
+{
+  "description": "An integer id past 2^53 - 1",
+  "raw": "{\"jsonrpc\":\"2.0\",\"sirius\":1,\"id\":9007199254740992,\"method\":\"display\",\"params\":{\"kind\":\"toast\",\"content\":\"hi\"}}",
+  "expect": {
+    "error": -32600,
+    "id": null
+  }
+}

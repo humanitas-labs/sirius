@@ -1,0 +1,48 @@
+{
+  "description": "All three annotations, and an unknown one ignored",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": [
+        {
+          "type": "text",
+          "text": "hi",
+          "annotations": {
+            "audience": [
+              "user",
+              "assistant"
+            ],
+            "priority": 1,
+            "lastModified": "2026-10-09T12:00:00Z",
+            "future": null
+          }
+        }
+      ]
+    }
+  },
+  "expect": {
+    "result": "display",
+    "id": "1",
+    "params": {
+      "content": [
+        {
+          "type": "text",
+          "annotations": {
+            "lastModified": "2026-10-09T12:00:00Z",
+            "audience": [
+              "user",
+              "assistant"
+            ],
+            "priority": 1
+          },
+          "text": "hi"
+        }
+      ],
+      "kind": "toast"
+    }
+  }
+}

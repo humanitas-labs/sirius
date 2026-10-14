@@ -1,0 +1,31 @@
+{
+  "description": "PENDING: an image then an unknown type; data.type names the unknown type today",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": [
+        {
+          "type": "image",
+          "data": "aGk=",
+          "mimeType": "image/png"
+        },
+        {
+          "type": "widget"
+        }
+      ]
+    }
+  },
+  "expect": {
+    "error": -32004,
+    "id": "1",
+    "data": {
+      "type": "widget",
+      "kind": "toast",
+      "method": "display"
+    }
+  }
+}

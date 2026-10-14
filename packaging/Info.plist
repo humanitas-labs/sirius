@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>Sirius</string>
+	<key>CFBundleExecutable</key>
+	<string>Sirius</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.humanitas.sirius</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleIconFile</key>
+	<string>AppIcon</string>
+	<key>CFBundleName</key>
+	<string>Sirius</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>0.0.0</string>
+	<key>CFBundleVersion</key>
+	<string>0.0.0</string>
+	<key>LSApplicationCategoryType</key>
+	<string>public.app-category.productivity</string>
+	<key>LSMinimumSystemVersion</key>
+	<string>14.0</string>
+	<key>LSUIElement</key>
+	<true/>
+	<!-- No App Nap: a menu-bar app with no window is a nap candidate, and the composer's summon must not wait to wake. -->
+	<key>NSAppSleepDisabled</key>
+	<true/>
+	<!-- No automatic icons on standard menu items (macOS 26 puts an x box on Quit). -->
+	<key>NSMenuEnableActionImages</key>
+	<false/>
+	<!-- Dictation: hold fn and speak (dictation.md). Asked for only from the Allow button in setup, never unannounced. TODO(andrew): the copy macOS shows in the microphone prompt. -->
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Sirius listens while you hold fn, to send what you say to your agents or type it at the cursor.</string>
+	<!-- In-app updates, as Parrot's. The appcast is a GitHub release asset, written by scripts/make-release.sh; latest/download always serves the newest release's. -->
+	<key>SUEnableAutomaticChecks</key>
+	<true/>
+	<key>SUFeedURL</key>
+	<string>https://github.com/humanitas-labs/sirius/releases/latest/download/appcast.xml</string>
+	<!-- Public half of the Sirius update key (generate_keys --account sirius), Sirius's own, never Parrot's. The private half is only in the release Mac's login keychain. -->
+	<key>SUPublicEDKey</key>
+	<string>+3akyxNtPI2icyFsuDFZp2FFfIWQ4bwqp+dCTCyViYw=</string>
+	<key>SURequireSignedFeed</key>
+	<true/>
+	<key>SUScheduledCheckInterval</key>
+	<integer>86400</integer>
+	<key>SUVerifyUpdateBeforeExtraction</key>
+	<true/>
+</dict>
+</plist>

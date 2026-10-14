@@ -1,0 +1,32 @@
+{
+  "description": "An image and too much text: accepted types before limits",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": [
+        {
+          "type": "image",
+          "data": "aGk=",
+          "mimeType": "image/png"
+        },
+        {
+          "type": "text",
+          "text": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        }
+      ]
+    }
+  },
+  "expect": {
+    "error": -32004,
+    "id": "1",
+    "data": {
+      "type": "image",
+      "kind": "toast",
+      "method": "display"
+    }
+  }
+}

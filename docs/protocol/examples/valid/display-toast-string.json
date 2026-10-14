@@ -1,0 +1,26 @@
+{
+  "description": "A toast from a string",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": "Pushed the branch; tests pass."
+    }
+  },
+  "expect": {
+    "result": "display",
+    "id": "1",
+    "params": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Pushed the branch; tests pass."
+        }
+      ],
+      "kind": "toast"
+    }
+  }
+}

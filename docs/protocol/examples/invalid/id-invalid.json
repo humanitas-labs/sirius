@@ -1,0 +1,17 @@
+{
+  "description": "An id that is neither a string nor a safe integer",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": 1.5,
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": "hi"
+    }
+  },
+  "expect": {
+    "error": -32600,
+    "id": null
+  }
+}

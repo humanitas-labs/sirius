@@ -1,0 +1,21 @@
+{
+  "description": "An unknown display kind",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "display",
+    "params": {
+      "kind": "banner",
+      "content": "hi"
+    }
+  },
+  "expect": {
+    "error": -32002,
+    "id": "1",
+    "data": {
+      "kind": "banner",
+      "method": "display"
+    }
+  }
+}

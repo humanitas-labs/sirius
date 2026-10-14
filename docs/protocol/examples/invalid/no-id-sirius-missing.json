@@ -1,0 +1,10 @@
+{
+  "description": "A well-formed notification is silent without a sirius tag",
+  "frame": {
+    "jsonrpc": "2.0",
+    "method": "display"
+  },
+  "expect": {
+    "noResponse": true
+  }
+}

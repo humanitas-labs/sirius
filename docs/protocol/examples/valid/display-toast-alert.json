@@ -1,0 +1,28 @@
+{
+  "description": "An alert toast",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": "Need your eyes.",
+      "alert": true
+    }
+  },
+  "expect": {
+    "result": "display",
+    "id": "1",
+    "params": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Need your eyes."
+        }
+      ],
+      "kind": "toast",
+      "alert": true
+    }
+  }
+}

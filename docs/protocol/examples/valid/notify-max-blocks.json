@@ -1,0 +1,277 @@
+{
+  "description": "Exactly maxBlocks",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "notify",
+    "params": {
+      "content": [
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        }
+      ]
+    }
+  },
+  "expect": {
+    "result": "notify",
+    "id": "1",
+    "params": {
+      "content": [
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        },
+        {
+          "type": "text",
+          "text": "x"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "description": "An array is not a request",
+  "frame": [
+    1,
+    2
+  ],
+  "expect": {
+    "error": -32600,
+    "id": null
+  }
+}

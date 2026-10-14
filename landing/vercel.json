@@ -1,0 +1,7 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "cleanUrls": true,
+  "redirects": [
+    { "source": "/download", "destination": "https://github.com/humanitas-labs/sirius/releases/latest/download/Sirius.dmg", "statusCode": 302 }
+  ]
+}

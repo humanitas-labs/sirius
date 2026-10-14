@@ -1,0 +1,21 @@
+{
+  "description": "Speech with a voice",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "speak",
+    "params": {
+      "text": "Done.",
+      "voice": "Samantha"
+    }
+  },
+  "expect": {
+    "result": "speak",
+    "id": "1",
+    "params": {
+      "voice": "Samantha",
+      "text": "Done."
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "description": "A null id",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": null,
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": "hi"
+    }
+  },
+  "expect": {
+    "error": -32600,
+    "id": null
+  }
+}

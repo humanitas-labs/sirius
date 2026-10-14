@@ -1,0 +1,17 @@
+{
+  "description": "The largest safe-integer id",
+  "raw": "{\"jsonrpc\":\"2.0\",\"sirius\":1,\"id\":9007199254740991,\"method\":\"display\",\"params\":{\"kind\":\"toast\",\"content\":\"hi\"}}",
+  "expect": {
+    "result": "display",
+    "id": 9007199254740991,
+    "params": {
+      "content": [
+        {
+          "type": "text",
+          "text": "hi"
+        }
+      ],
+      "kind": "toast"
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "description": "Blank text beside an unknown type is not empty content",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": [
+        {
+          "type": "text",
+          "text": "  "
+        },
+        {
+          "type": "widget"
+        }
+      ]
+    }
+  },
+  "expect": {
+    "error": -32004,
+    "id": "1",
+    "data": {
+      "type": "widget",
+      "kind": "toast",
+      "method": "display"
+    }
+  }
+}

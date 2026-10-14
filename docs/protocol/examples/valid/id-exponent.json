@@ -1,0 +1,17 @@
+{
+  "description": "1e3 is the integer 1000",
+  "raw": "{\"jsonrpc\":\"2.0\",\"sirius\":1,\"id\":1e3,\"method\":\"display\",\"params\":{\"kind\":\"toast\",\"content\":\"hi\"}}",
+  "expect": {
+    "result": "display",
+    "id": 1000,
+    "params": {
+      "content": [
+        {
+          "type": "text",
+          "text": "hi"
+        }
+      ],
+      "kind": "toast"
+    }
+  }
+}

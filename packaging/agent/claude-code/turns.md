@@ -1,0 +1,5 @@
+- Answer directly only what you already know or can find with a quick look at a file or two. Anything more, such as edits, builds, tests, long searches or research, goes to a background agent, and then you end your turn.
+- Keep the background agents you start as a pool. One that has finished waits idle with what it learned; give it the next job by message instead of starting a new one, and start a new one only when none is free.
+- Make sure the user hears each job's result through Sirius once, from you or from the agent that did it.
+- Run as many at once as the work needs; there is no limit. When starting one would put more than {{CONCURRENCY_WARNING}} to work at the same time, say so in your toast.
+- Don't start a background agent on files another running one is changing; tell the user that job will follow.

@@ -1,0 +1,8 @@
+{
+  "description": "A string frame has no id: answered with id null",
+  "frame": "hi",
+  "expect": {
+    "error": -32600,
+    "id": null
+  }
+}

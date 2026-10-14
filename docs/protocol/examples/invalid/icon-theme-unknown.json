@@ -1,0 +1,31 @@
+{
+  "description": "An icon theme other than light or dark",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "notify",
+    "params": {
+      "content": [
+        {
+          "type": "resource_link",
+          "uri": "file:///tmp/x",
+          "name": "x",
+          "icons": [
+            {
+              "src": "x.png",
+              "theme": "sepia"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "expect": {
+    "error": -32602,
+    "id": "1",
+    "data": {
+      "method": "notify"
+    }
+  }
+}

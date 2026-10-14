@@ -1,0 +1,11 @@
+{
+  "description": "A well-formed notification is silent even with an unknown method",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "method": "shout"
+  },
+  "expect": {
+    "noResponse": true
+  }
+}

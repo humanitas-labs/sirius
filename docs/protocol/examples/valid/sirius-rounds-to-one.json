@@ -1,0 +1,17 @@
+{
+  "description": "PENDING: 1.0000000000000001 rounds to 1 as a double and is accepted today",
+  "raw": "{\"jsonrpc\":\"2.0\",\"sirius\":1.0000000000000001,\"id\":\"1\",\"method\":\"display\",\"params\":{\"kind\":\"toast\",\"content\":\"hi\"}}",
+  "expect": {
+    "result": "display",
+    "id": "1",
+    "params": {
+      "content": [
+        {
+          "type": "text",
+          "text": "hi"
+        }
+      ],
+      "kind": "toast"
+    }
+  }
+}

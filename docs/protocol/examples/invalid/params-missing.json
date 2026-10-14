@@ -1,0 +1,16 @@
+{
+  "description": "No params",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "display"
+  },
+  "expect": {
+    "error": -32602,
+    "id": "1",
+    "data": {
+      "method": "display"
+    }
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "description": "No id and jsonrpc 1.0: answered with id null",
+  "frame": {
+    "jsonrpc": "1.0",
+    "sirius": 1,
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": "hi"
+    }
+  },
+  "expect": {
+    "error": -32600,
+    "id": null
+  }
+}

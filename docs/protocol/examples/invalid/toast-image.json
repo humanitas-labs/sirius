@@ -1,0 +1,32 @@
+{
+  "description": "toast accepts text only",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": [
+        {
+          "type": "text",
+          "text": "see"
+        },
+        {
+          "type": "image",
+          "data": "iVBORw0KGgo=",
+          "mimeType": "image/png"
+        }
+      ]
+    }
+  },
+  "expect": {
+    "error": -32004,
+    "id": "1",
+    "data": {
+      "type": "image",
+      "kind": "toast",
+      "method": "display"
+    }
+  }
+}

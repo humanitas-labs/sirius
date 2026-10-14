@@ -1,0 +1,17 @@
+{
+  "description": "1e308 in an unknown field is ignored",
+  "raw": "{\"jsonrpc\":\"2.0\",\"sirius\":1,\"id\":\"1\",\"x\":1e308,\"method\":\"display\",\"params\":{\"kind\":\"toast\",\"content\":\"hi\"}}",
+  "expect": {
+    "result": "display",
+    "id": "1",
+    "params": {
+      "content": [
+        {
+          "type": "text",
+          "text": "hi"
+        }
+      ],
+      "kind": "toast"
+    }
+  }
+}

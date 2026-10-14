@@ -1,0 +1,10 @@
+{
+  "description": "No id and no method: answered with id null",
+  "frame": {
+    "jsonrpc": "2.0"
+  },
+  "expect": {
+    "error": -32600,
+    "id": null
+  }
+}

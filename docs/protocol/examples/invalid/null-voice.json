@@ -1,0 +1,20 @@
+{
+  "description": "voice: null",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "speak",
+    "params": {
+      "text": "hi",
+      "voice": null
+    }
+  },
+  "expect": {
+    "error": -32602,
+    "id": "1",
+    "data": {
+      "method": "speak"
+    }
+  }
+}

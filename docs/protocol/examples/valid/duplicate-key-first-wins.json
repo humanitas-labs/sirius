@@ -1,0 +1,17 @@
+{
+  "description": "PENDING: a duplicate key keeps its first value today (toast, not dialog)",
+  "raw": "{\"jsonrpc\":\"2.0\",\"sirius\":1,\"id\":\"1\",\"method\":\"display\",\"params\":{\"kind\":\"toast\",\"kind\":\"dialog\",\"content\":\"first\",\"content\":\"second\"}}",
+  "expect": {
+    "result": "display",
+    "id": "1",
+    "params": {
+      "content": [
+        {
+          "type": "text",
+          "text": "first"
+        }
+      ],
+      "kind": "toast"
+    }
+  }
+}

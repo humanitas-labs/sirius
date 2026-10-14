@@ -1,0 +1,26 @@
+{
+  "description": "A resource link's title: null fails its shape before notify's accepted types",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "notify",
+    "params": {
+      "content": [
+        {
+          "type": "resource_link",
+          "uri": "file:///tmp/x",
+          "name": "x",
+          "title": null
+        }
+      ]
+    }
+  },
+  "expect": {
+    "error": -32602,
+    "id": "1",
+    "data": {
+      "method": "notify"
+    }
+  }
+}

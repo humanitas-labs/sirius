@@ -1,0 +1,49 @@
+{
+  "description": "A text block with annotations and _meta",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": [
+        {
+          "type": "text",
+          "text": "hi",
+          "annotations": {
+            "audience": [
+              "user"
+            ],
+            "priority": 0.5
+          },
+          "_meta": {
+            "x": 1
+          }
+        }
+      ]
+    }
+  },
+  "expect": {
+    "result": "display",
+    "id": "1",
+    "params": {
+      "content": [
+        {
+          "type": "text",
+          "annotations": {
+            "audience": [
+              "user"
+            ],
+            "priority": 0.5
+          },
+          "text": "hi",
+          "_meta": {
+            "x": 1
+          }
+        }
+      ],
+      "kind": "toast"
+    }
+  }
+}

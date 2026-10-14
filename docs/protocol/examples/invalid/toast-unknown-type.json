@@ -1,0 +1,27 @@
+{
+  "description": "An unknown block type",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": [
+        {
+          "type": "video",
+          "url": "x"
+        }
+      ]
+    }
+  },
+  "expect": {
+    "error": -32004,
+    "id": "1",
+    "data": {
+      "type": "video",
+      "kind": "toast",
+      "method": "display"
+    }
+  }
+}

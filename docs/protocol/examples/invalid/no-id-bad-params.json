@@ -1,0 +1,15 @@
+{
+  "description": "A well-formed notification is silent even with bad params",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": 3
+    }
+  },
+  "expect": {
+    "noResponse": true
+  }
+}

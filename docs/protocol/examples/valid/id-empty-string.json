@@ -1,0 +1,26 @@
+{
+  "description": "An empty string id is a string",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "",
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": "hi"
+    }
+  },
+  "expect": {
+    "result": "display",
+    "id": "",
+    "params": {
+      "content": [
+        {
+          "type": "text",
+          "text": "hi"
+        }
+      ],
+      "kind": "toast"
+    }
+  }
+}

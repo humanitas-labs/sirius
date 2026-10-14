@@ -1,0 +1,26 @@
+{
+  "description": "A safe-integer id",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": 7,
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": "hi"
+    }
+  },
+  "expect": {
+    "result": "display",
+    "id": 7,
+    "params": {
+      "content": [
+        {
+          "type": "text",
+          "text": "hi"
+        }
+      ],
+      "kind": "toast"
+    }
+  }
+}

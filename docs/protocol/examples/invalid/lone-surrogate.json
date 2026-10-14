@@ -1,0 +1,8 @@
+{
+  "description": "PENDING: a lone surrogate escape fails the parse today",
+  "raw": "{\"jsonrpc\":\"2.0\",\"sirius\":1,\"id\":\"1\",\"method\":\"display\",\"params\":{\"kind\":\"toast\",\"content\":\"\\ud800\"}}",
+  "expect": {
+    "error": -32700,
+    "id": null
+  }
+}

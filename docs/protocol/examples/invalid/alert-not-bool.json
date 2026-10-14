@@ -1,0 +1,21 @@
+{
+  "description": "alert must be a boolean",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": "hi",
+      "alert": "yes"
+    }
+  },
+  "expect": {
+    "error": -32602,
+    "id": "1",
+    "data": {
+      "method": "display"
+    }
+  }
+}

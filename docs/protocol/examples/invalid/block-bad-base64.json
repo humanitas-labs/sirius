@@ -1,0 +1,27 @@
+{
+  "description": "An image with invalid base64 fails shape before type",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": [
+        {
+          "type": "image",
+          "data": "!!",
+          "mimeType": "image/png"
+        }
+      ]
+    }
+  },
+  "expect": {
+    "error": -32602,
+    "id": "1",
+    "data": {
+      "kind": "toast",
+      "method": "display"
+    }
+  }
+}

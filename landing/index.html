@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sirius</title>
+<meta name="description" content="Sirius — talk to your agents from anywhere on your Mac.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="canonical" href="https://trysirius.app/">
+<meta property="og:url" content="https://trysirius.app/">
+<meta property="og:title" content="Sirius">
+<meta property="og:image" content="https://trysirius.app/assets/poster.jpg">
+</head>
+<body>
+<canvas id="sky" aria-hidden="true"></canvas>
+<noscript><img class="fallback" src="assets/poster.jpg" alt=""></noscript>
+
+<a class="gh" href="https://github.com/humanitas-labs/sirius" target="_blank" rel="noopener noreferrer" aria-label="Sirius on GitHub">
+  <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="M8 0C3.58 0 0 3.67 0 8.2c0 3.63 2.29 6.7 5.47 7.78.4.07.55-.17.55-.39l-.01-1.53c-2.01.38-2.53-.5-2.69-.96-.09-.24-.48-.96-.82-1.16-.28-.15-.68-.53-.01-.54.63-.01 1.08.6 1.23.84.72 1.24 1.87.9 2.33.68.07-.53.28-.89.51-1.1-1.78-.2-3.64-.91-3.64-4.05 0-.89.31-1.63.82-2.2-.08-.21-.36-1.05.08-2.18 0 0 .67-.21 2.2.84a7.4 7.4 0 0 1 4 0c1.53-1.07 2.2-.84 2.2-.84.44 1.13.16 1.97.08 2.18.51.57.82 1.3.82 2.2 0 3.15-1.87 3.85-3.65 4.05.29.26.54.75.54 1.52l-.01 2.26c0 .21.15.47.55.39A8.24 8.24 0 0 0 16 8.2C16 3.67 12.42 0 8 0Z"/></svg>
+</a>
+
+<header class="lockup" id="lockup">
+  <h1 class="wordmark">SIRIUS</h1>
+  <a class="download" href="/download">
+    <svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path fill="currentColor" d="M6.61 3.75c-.52 0-1.32-.59-2.16-.57a3.2 3.2 0 0 0-2.7 1.64c-1.15 2-.3 4.95.83 6.57.55.8 1.2 1.68 2.06 1.65.83-.03 1.14-.54 2.14-.54 1 0 1.28.54 2.15.52.89-.01 1.46-.8 2-1.6.63-.92.89-1.81.9-1.86-.02 0-1.73-.67-1.75-2.64-.01-1.65 1.35-2.44 1.41-2.48a3.05 3.05 0 0 0-2.39-1.29c-1.09-.08-2 .6-2.5.6Zm1.83-1.67c.46-.55.77-1.32.68-2.08-.66.03-1.45.44-1.92.99-.43.49-.79 1.27-.7 2.02.73.06 1.48-.37 1.94-.93"/></svg>
+    <span>Download</span>
+  </a>
+</header>
+
+<div class="label" id="label" aria-hidden="true">Scorpius</div>
+
+<script src="sky.js" type="module"></script>
+</body>
+</html>

@@ -1,0 +1,27 @@
+{
+  "description": "annotations: null",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": [
+        {
+          "type": "text",
+          "text": "hi",
+          "annotations": null
+        }
+      ]
+    }
+  },
+  "expect": {
+    "error": -32602,
+    "id": "1",
+    "data": {
+      "kind": "toast",
+      "method": "display"
+    }
+  }
+}

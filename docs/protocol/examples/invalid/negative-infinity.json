@@ -1,0 +1,8 @@
+{
+  "description": "-Infinity is not JSON",
+  "raw": "{\"jsonrpc\":\"2.0\",\"sirius\":1,\"id\":\"1\",\"method\":\"display\",\"params\":{\"kind\":\"toast\",\"content\":\"hi\",\"x\":-Infinity}}",
+  "expect": {
+    "error": -32700,
+    "id": null
+  }
+}

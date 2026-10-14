@@ -1,0 +1,17 @@
+{
+  "description": "sirius 1.0 is the integer 1",
+  "raw": "{\"jsonrpc\":\"2.0\",\"sirius\":1.0,\"id\":\"1\",\"method\":\"display\",\"params\":{\"kind\":\"toast\",\"content\":\"hi\"}}",
+  "expect": {
+    "result": "display",
+    "id": "1",
+    "params": {
+      "kind": "toast",
+      "content": [
+        {
+          "type": "text",
+          "text": "hi"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "description": "Speech with no text",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "speak",
+    "params": {
+      "text": " "
+    }
+  },
+  "expect": {
+    "error": -32602,
+    "id": "1",
+    "data": {
+      "method": "speak"
+    }
+  }
+}

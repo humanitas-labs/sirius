@@ -1,0 +1,8 @@
+{
+  "description": "Not JSON",
+  "raw": "{\"jsonrpc\": ",
+  "expect": {
+    "error": -32700,
+    "id": null
+  }
+}

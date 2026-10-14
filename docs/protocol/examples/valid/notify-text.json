@@ -1,0 +1,26 @@
+{
+  "description": "A notification with a title",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "notify",
+    "params": {
+      "content": "Build finished.",
+      "title": "Claude"
+    }
+  },
+  "expect": {
+    "result": "notify",
+    "id": "1",
+    "params": {
+      "title": "Claude",
+      "content": [
+        {
+          "type": "text",
+          "text": "Build finished."
+        }
+      ]
+    }
+  }
+}

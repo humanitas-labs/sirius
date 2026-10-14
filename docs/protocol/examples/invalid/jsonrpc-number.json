@@ -1,0 +1,17 @@
+{
+  "description": "jsonrpc as the number 2.0",
+  "frame": {
+    "jsonrpc": 2.0,
+    "sirius": 1,
+    "id": "1",
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": "hi"
+    }
+  },
+  "expect": {
+    "error": -32600,
+    "id": "1"
+  }
+}

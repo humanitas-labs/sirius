@@ -1,0 +1,26 @@
+{
+  "description": "A negative id",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": -5,
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": "hi"
+    }
+  },
+  "expect": {
+    "result": "display",
+    "id": -5,
+    "params": {
+      "content": [
+        {
+          "type": "text",
+          "text": "hi"
+        }
+      ],
+      "kind": "toast"
+    }
+  }
+}

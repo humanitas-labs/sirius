@@ -1,0 +1,30 @@
+{
+  "description": "An embedded resource with text and blob",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "display",
+    "params": {
+      "kind": "toast",
+      "content": [
+        {
+          "type": "resource",
+          "resource": {
+            "uri": "x",
+            "text": "a",
+            "blob": "iVBORw0KGgo="
+          }
+        }
+      ]
+    }
+  },
+  "expect": {
+    "error": -32602,
+    "id": "1",
+    "data": {
+      "kind": "toast",
+      "method": "display"
+    }
+  }
+}
