@@ -684,6 +684,9 @@
         "text"
       ],
       "type": "object"
+    },
+    "LastParams": {
+      "type": "object"
     }
   }
 }

@@ -47,9 +47,14 @@ MainActor.assumeIsolated {
     // "dev" has no default voice; the registry will pass each agent's.
     let speech = SpeechPresenter(agentVoice: { _ in nil })
     let notifications = NotificationPresenter()
-    let queue = AppCommandQueue(toasts: toasts, notifications: notifications, speech: speech)
-    // Files each registered agent's commands in its log before the presenters see them.
-    let commands = LoggingCommandQueue(inner: queue)
+    // The last response of each agent, seeded from the logs and recorded as
+    // displays are accepted: what `sirius last` and the menu's Last response
+    // show again.
+    let responses = LastResponses()
+    let queue = AppCommandQueue(toasts: toasts, notifications: notifications, speech: speech, responses: responses)
+    // Files each registered agent's commands in its log before the presenters see them,
+    // seeding the last responses from the same read.
+    let commands = LoggingCommandQueue(inner: queue, responses: responses)
 
     // One instance per user: the server takes $TMPDIR/sirius/sirius.lock, and
     // a second app exits before showing anything.
@@ -187,7 +192,12 @@ MainActor.assumeIsolated {
     // NSApplication holds its delegate weakly; the local keeps it alive.
     let delegate = AppDelegate(queue: queue, openOnboarding: { onboarding.show(agents: $0) },
                                openSettings: { settings.show() },
-                               openComposer: { composer.open() }, composeShortcut: { composer.shortcut })
+                               openComposer: { composer.open() }, composeShortcut: { composer.shortcut },
+                               lastResponse: { responses.newest() != nil },
+                               showLast: {
+                                   guard let last = responses.newest() else { return }
+                                   _ = toasts.enqueue(agent: last.agent, text: last.text, alert: last.alert)
+                               })
     app.delegate = delegate
     app.run()
     withExtendedLifetime((termination, sigterm, composer, dictation, onboarding, settings, launchCue)) {}

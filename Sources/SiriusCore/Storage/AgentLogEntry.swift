@@ -155,6 +155,10 @@ public struct CommandSummary: Equatable, Sendable, Codable {
         case .speak(let params):
             voice = params.voice
             setText(params.text)
+        // Nothing of its own to keep: `last` shows again what the display
+        // it answers for already logged.
+        case .last:
+            break
         }
     }
 

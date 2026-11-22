@@ -45,6 +45,8 @@ public actor AgentLog {
     private let handle: FileHandle
     private let now: @Sendable () -> Date
     private var state: AgentLogState
+    // The last display command in the file, found by the same read.
+    public nonisolated let lastDisplay: LoggedDisplay?
 
     public init(url: URL, now: @escaping @Sendable () -> Date = { Date() }) throws {
         let existing = FileManager.default.fileExists(atPath: url.path) ? try Data(contentsOf: url) : Data()
@@ -60,12 +62,16 @@ public actor AgentLog {
 
         var state = AgentLogState()
         var bodies: [String: RequeuedMessage] = [:]
+        var lastDisplay: LoggedDisplay?
         for entry in Self.decode(existing).entries {
             state.apply(entry.event)
             if case .message(let id, let text, let attachments, let sender, let fromSirius, let context) = entry.event,
                bodies[id] == nil {
                 bodies[id] = RequeuedMessage(id: id, text: text, attachments: attachments, peerSender: sender,
                                              fromSirius: fromSirius, hadContext: context)
+            }
+            if case .command(_, _, .display, let params) = entry.event, params.text != nil {
+                lastDisplay = LoggedDisplay(summary: params, at: entry.at)
             }
         }
 
@@ -91,6 +97,7 @@ public actor AgentLog {
         self.state = state
         self.recovered = recovered
         self.requeued = requeued
+        self.lastDisplay = lastDisplay
     }
 
     static let restartReason = "app restarted before the turn finished"

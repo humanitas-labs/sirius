@@ -1,0 +1,15 @@
+{
+  "description": "last takes an empty params object",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "1",
+    "method": "last",
+    "params": {}
+  },
+  "expect": {
+    "result": "last",
+    "id": "1",
+    "params": {}
+  }
+}

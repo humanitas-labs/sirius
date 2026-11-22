@@ -70,6 +70,9 @@ func validateRequest(_ object: [String: JSONValue]) throws -> Call {
     case .display: return .display(try validateDisplay(params))
     case .notify: return .notify(try validateNotify(params))
     case .speak: return .speak(try validateSpeak(params))
+    // Nothing to read: unknown fields are ignored like anywhere else, so a
+    // newer helper's extra field reaches an older app harmlessly.
+    case .last: return .last(LastParams())
     case .agentMessage:
         guard let sender = params["sender"]?.string, !isBlank(sender),
               sender.utf8.count <= 256,

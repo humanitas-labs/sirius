@@ -1,0 +1,17 @@
+{
+  "description": "last params must be an object, whatever is in it",
+  "frame": {
+    "jsonrpc": "2.0",
+    "sirius": 1,
+    "id": "9",
+    "method": "last",
+    "params": []
+  },
+  "expect": {
+    "error": -32602,
+    "id": "9",
+    "data": {
+      "method": "last"
+    }
+  }
+}

@@ -5,7 +5,7 @@
 set -euo pipefail
 
 GENERATOR="ts-json-schema-generator@2.9.0"
-TYPES=(DisplayParams NotifyParams SpeakParams)
+TYPES=(DisplayParams NotifyParams SpeakParams LastParams)
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
 source_ts="$root/docs/protocol/proto.ts"
@@ -32,7 +32,8 @@ done
 jq -n --arg generator "$GENERATOR" \
   --slurpfile display "$work/DisplayParams.json" \
   --slurpfile notify "$work/NotifyParams.json" \
-  --slurpfile speak "$work/SpeakParams.json" '
+  --slurpfile speak "$work/SpeakParams.json" \
+  --slurpfile last "$work/LastParams.json" '
   def clean: del(.["$schema"], .definitions);
   {
     "$schema": "http://json-schema.org/draft-07/schema#",
@@ -40,7 +41,8 @@ jq -n --arg generator "$GENERATOR" \
     definitions: {
       DisplayParams: ($display[0] | clean),
       NotifyParams: ($notify[0] | clean),
-      SpeakParams: ($speak[0] | clean)
+      SpeakParams: ($speak[0] | clean),
+      LastParams: ($last[0] | clean)
     }
   }' > "$work/schema.json"
 

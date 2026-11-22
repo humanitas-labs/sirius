@@ -12,7 +12,7 @@ struct Tool {
 
     var name: String { method.rawValue }
 
-    static let all: [Tool] = [display, notify, speak]
+    static let all: [Tool] = [display, notify, speak, last]
 
     static func named(_ name: String) -> Tool? {
         all.first { $0.name == name }
@@ -54,6 +54,17 @@ struct Tool {
             fallback: true if the requested voice was not installed.
             """,
         inputSchema: Schemas.speakParams
+    )
+
+    static let last = Tool(
+        method: .last,
+        title: "Last",
+        description: """
+            Show the user your last displayed response again, exactly as it was shown: a toast, \
+            an alert where the display set one. Use it when they ask you to say or show it again. \
+            It is refused with NOTHING_TO_SHOW if you have displayed nothing yet. Nothing is passed.
+            """,
+        inputSchema: Schemas.lastParams
     )
 
     // The entry in a tools/list result.
