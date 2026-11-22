@@ -48,6 +48,19 @@ final class ToastPresenterTests: XCTestCase {
         return (presenter, { made })
     }
 
+    // A logo that is not square keeps its aspect in the toast's mark box:
+    // portrait fills the height, landscape the width, never stretched.
+    func testAMarkThatIsNotSquareKeepsItsAspect() {
+        let box: CGFloat = 18
+        XCTAssertEqual(ToastPanel.markSize(for: NSSize(width: 18, height: 18), in: box),
+                       NSSize(width: 18, height: 18))
+        XCTAssertEqual(ToastPanel.markSize(for: NSSize(width: 24, height: 30), in: box).height, box)
+        XCTAssertEqual(ToastPanel.markSize(for: NSSize(width: 24, height: 30), in: box).width, 14.4, accuracy: 0.0001)
+        XCTAssertEqual(ToastPanel.markSize(for: NSSize(width: 30, height: 24), in: box).width, box)
+        XCTAssertEqual(ToastPanel.markSize(for: NSSize(width: 30, height: 24), in: box).height, 14.4, accuracy: 0.0001)
+        XCTAssertEqual(ToastPanel.markSize(for: NSSize(width: 0, height: 30), in: box), NSSize(width: 18, height: 18))
+    }
+
     func testAStrandedPanelIsReplacedAndTheToastShownOnTheNewOne() {
         let (presenter, made) = presenter(strandFirst: 1)
         XCTAssertTrue(presenter.enqueue(agent: "claude", text: "hello", alert: true))

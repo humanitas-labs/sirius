@@ -304,11 +304,23 @@ final class ToastPanel: NSPanel, ToastSurface {
     private static func glyph(agent: String, mark: NSImage?) -> NSImage? {
         if let mark, let logo = mark.copy() as? NSImage {
             // 24, down from 30, which was a touch big relative to the text.
-            logo.size = NSSize(width: CapsuleView.markSize, height: CapsuleView.markSize)
+            // A logo that is not square keeps its aspect: it fills the mark
+            // box one way and centres in the other, never stretched into
+            // the box (OpenCode's is 4:5; a person's icon.png can be any).
+            logo.size = markSize(for: mark.size, in: CapsuleView.markSize)
             logo.accessibilityDescription = agent
             return logo
         }
         return SiriusMark.template(agent)
+    }
+
+    // An image's size inside a square box, keeping its aspect: square stays
+    // the box, portrait fills the height, landscape the width.
+    static func markSize(for image: NSSize, in box: CGFloat) -> NSSize {
+        guard image.width > 0, image.height > 0 else { return NSSize(width: box, height: box) }
+        let aspect = image.width / image.height
+        return aspect >= 1 ? NSSize(width: box, height: box / aspect)
+                           : NSSize(width: box * aspect, height: box)
     }
 
     // The capsule eases from one size to the next on the in curve, its
