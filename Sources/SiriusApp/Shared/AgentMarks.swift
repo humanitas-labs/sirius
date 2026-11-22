@@ -56,9 +56,10 @@ enum AgentMarks {
     private static func file(agent: String, harness: AgentRegistration.Harness?) -> URL? {
         let registry = AgentRegistry(directory: AgentHost.registryDirectory())
         let own = registry.icon(agent: agent)
-        let harness = harness ?? (try? registry.load(agent: agent).get())?.registration.harness
-        if let own, !isSeededCopy(own, harness: harness) { return own }
-        guard let harness else { return own }
+        if let own, !isSeededCopy(own) { return own }
+        guard let harness = harness ?? (try? registry.load(agent: agent).get())?.registration.harness else {
+            return own
+        }
         let url = AgentRegistry.defaultIcon(harness: harness, marks: directory)
         return FileManager.default.fileExists(atPath: url.path) ? url : own
     }
@@ -66,26 +67,22 @@ enum AgentMarks {
     // Whether an agent's icon is a copy onboarding seeded from an earlier
     // default mark, untouched since. Such a copy gives way to the current
     // default, so a mark fixed in the app (Gemini's gradient, Meta's for
-    // Muse) reaches agents set up before the fix. A logo the person put
-    // there is not one and is kept. An svg copy carries the comment naming
-    // its simple-icons source; a png copy (OpenCode's) is byte-for-byte the
-    // bundled default.
-    static func isSeededCopy(_ url: URL, harness: AgentRegistration.Harness?) -> Bool {
+    // Muse, OpenCode's favicon-informed mark) reaches agents set up before
+    // the fix. A logo the person put there is not one and is kept. An svg
+    // copy carries the comment naming its simple-icons source; a png copy
+    // (OpenCode's) carries the tEXt marker the shipped file embeds, so a
+    // fixed default retires every seeded copy of any version of it.
+    static func isSeededCopy(_ url: URL) -> Bool {
+        guard let data = try? Data(contentsOf: url), data.count < 64_000 else { return false }
         switch url.pathExtension {
         case "svg":
-            guard let data = try? Data(contentsOf: url), data.count < 64_000,
-                  let text = String(data: data, encoding: .utf8) else { return false }
+            guard let text = String(data: data, encoding: .utf8) else { return false }
             return text.contains("<!-- simple-icons ")
         case "png":
-            guard let harness, let seeded = try? Data(contentsOf: defaultMarkURL(harness)) else { return false }
-            return ((try? Data(contentsOf: url)) ?? Data()) == seeded
+            return data.range(of: Data("Sirius seeded default mark".utf8)) != nil
         default:
             return false
         }
-    }
-
-    private static func defaultMarkURL(_ harness: AgentRegistration.Harness) -> URL {
-        directory.appendingPathComponent("\(harness.rawValue).png")
     }
 
     // The mark drawn once by AppKit into a bitmap at 128 pixels a side.
