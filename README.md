@@ -31,6 +31,7 @@ brew install --cask sirius
 | Hold ⌃ and `fn` | Paste what you said at the cursor, in any app |
 | ⌘⇧J | Open the composer; `fn` dictates into it |
 | ⌘/ (in the composer) | Switch to the next agent |
+| `/` while holding `fn` | Switch to the next agent as you speak; the pill shows which |
 
 Change both shortcuts in **Settings…**. Speech recognition runs on your Mac; the first start downloads the speech model (about 145 MB), or reuses Parrot's model and dictionary. The full manual ships in the app under **Sirius Manual**, and your agent can answer questions from it ([read it here](docs/manual/index.md)).
 

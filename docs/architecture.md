@@ -1,6 +1,6 @@
 # Sirius architecture
 
-Last updated: `2026.11.18`
+Last updated: `2026.11.22`
 
 > Sirius is one Mac app and two small helpers. A message goes from the composer to one agent through an adapter, which is the only per-agent code. Replies come back through one protocol for every agent: the agent calls `display`, `notify` or `speak`, a helper sends that to the app's socket, and the app presents it.
 
@@ -51,7 +51,7 @@ The agent's own output stream is never shown to the user (agreed). The adapter r
 
 | Component | What it is | Status |
 |---|---|---|
-| Composer | The panel the hotkey opens. The user types and attaches files; the current agent shows as its icon beside the send button, and ⌘/ opens the agent selector. Produces a Message. | agreed |
+| Composer | The panel the hotkey opens. The user types and attaches files; the current agent shows as its icon beside the send button, and ⌘/ steps the agent selector to the next agent. Produces a Message. | agreed |
 | Registry | One folder per agent under `~/.agents/registry/`: `agent.json` (name, harness, executable, root, voice) and an optional `instructions.md`. Written by setup. Sirius's own state (the resume id) stays in Application Support. | agreed |
 | Adapter | Per agent kind. Starts the agent warm in its root, delivers Messages, knows when a turn ends, keeps the resume id. | agreed |
 | Socket server | One Unix socket per agent. Validates each request against the schema and accepts it whole or rejects it. | agreed |
@@ -64,7 +64,7 @@ Both helpers are thin: parse the input, build the request, send it to `$SIRIUS_S
 
 ## 3. User to agent
 
-1. The user types in the composer, attaches files and sends. The message goes to the agent shown beside the send button, changed with ⌘/.
+1. The user types in the composer, attaches files and sends. The message goes to the agent shown beside the send button, changed with ⌘/, which steps the agent selector.
 2. The app assigns a message id, writes each attachment to `agents/claude/attachments/<message>/`, including pasted content that is not a file yet, and appends the Message to the log.
 3. If the agent is mid-turn, the Message waits until the turn ends; one turn at a time per agent (proposed).
 4. The adapter renders the Message as text and starts a turn. Every adapter gets the same text:

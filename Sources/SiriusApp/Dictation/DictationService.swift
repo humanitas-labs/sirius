@@ -8,7 +8,9 @@ import SiriusCore
 // SiriusDelivery decides where each transcript goes. Hold ⌃ with it (⌃fn,
 // HoldKey.pasteModifier) and the transcript is pasted at the cursor rather
 // than sent to an agent; the pill shows a text-cursor
-// glyph for those holds. The key held can be fn, right ⌥, right ⌘ or ⌃,
+// glyph for those holds. Press / during an agent hold and the agent
+// selector steps to the next agent, as ⌘/ does in the composer: the pill
+// shows its logo and the transcript goes to it. The key held can be fn, right ⌥, right ⌘ or ⌃,
 // chosen on the onboarding sheet and stored in UserDefaults
 // (Shortcuts.holdKey); "fn" below means whichever it is.
 //
@@ -268,8 +270,10 @@ final class DictationService {
             onPress?()
             forwarding = false
             self.mode = mode
-            // Who is addressable, read again for this transcript.
+            // Who is addressable, read again for this transcript, and who
+            // a / during the hold steps through.
             agents.refresh()
+            composer.reloadAgents()
             // Never a request from a press: the prompt belongs to setup.
             guard Permissions.microphone == .granted else {
                 if !microphoneLogged {
@@ -308,6 +312,14 @@ final class DictationService {
             mode = .paste
             pill.pastes = true
             SiriusLog.dictation.info("dictation: paste hold")
+        case .switchAgent:
+            // / during the hold: the agent selector steps, and stays there
+            // for the composer and the next hold. Delivery reads it once
+            // the transcript is in. With the composer open its own logo
+            // shows the change; otherwise the pill does.
+            guard forwarding, mode == .agent, let agent = composer.nextAgent() else { return }
+            if surface.route == .pill { pill.switched(to: Self.logo(agent)) }
+            SiriusLog.dictation.info("dictation: switched to \(agent) during the hold")
         case .released:
             guard forwarding else { return }
             forwarding = false

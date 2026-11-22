@@ -170,6 +170,37 @@ final class DictationPillTests: XCTestCase {
         run(DictationPill.scaleDuration + 0.1)
     }
 
+    // / during the hold: the pill goes back to the new agent's logo, then
+    // to the bars; a second switch holds again on the next logo; a release
+    // on the logo closes as any other.
+    func testASwitchDuringTheHoldShowsTheNewLogoThenTheBars() {
+        let pill = makePill()
+        let claude = NSImage(size: NSSize(width: 16, height: 16))
+        let codex = NSImage(size: NSSize(width: 16, height: 16))
+        pill.destination = { claude }
+        pill.switched(to: codex)
+        XCTAssertFalse(pill.isShown, "no hold: a switch shows nothing")
+        pill.dictationStarted()
+        run(hold)
+        assertShowing(pill, .recording, "recording")
+        pill.switched(to: codex)
+        assertShowing(pill, .mark, "switched")
+        XCTAssertTrue(pill.shownOpenLogo === codex, "on the new agent's logo")
+        run(DictationPill.switchHold - 0.2)
+        pill.switched(to: claude)
+        run(DictationPill.switchHold - 0.2)
+        assertShowing(pill, .mark, "a second switch holds again")
+        XCTAssertTrue(pill.shownOpenLogo === claude)
+        run(0.4)
+        assertShowing(pill, .recording, "back to the bars")
+        pill.switched(to: nil)
+        XCTAssertNil(pill.shownOpenLogo, "an agent with no logo: the mark")
+        pill.dictationTranscribing()
+        pill.dictationFinished()
+        run(DictationPill.transcribingHold + DictationPill.scaleDuration + 0.2)
+        assertGone(pill, "closed after a release on the logo")
+    }
+
     // From the release on the pill is the sparkle's: a hold opened on a
     // logo closes no later than one opened on the mark.
     func testAHoldOpenedOnALogoClosesAsTheSparkleDoes() {

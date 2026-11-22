@@ -492,12 +492,26 @@ final class ComposerController {
         panel.setAttachments(attachments)
     }
 
-    // ⌘/, Shift-Tab and a click on the logo step to the next agent in
-    // place. No list or popover: people have two to four agents.
-    private func nextAgent() {
-        guard let chosen = selection.next() else { return NSSound.beep() }
+    // The agent selector: ⌘/, Shift-Tab and a click on the logo step to
+    // the next agent in place, and so does `/` during a dictating hold
+    // (DictationService), composer open or not. No list or popover: people
+    // have two to four agents. Returns the agent now selected; nil, with a
+    // beep, when none is listed.
+    @discardableResult
+    func nextAgent() -> String? {
+        guard let chosen = selection.next() else {
+            NSSound.beep()
+            return nil
+        }
         defaults.set(chosen, forKey: Self.lastAgentKey)
         refreshAgent()
+        return chosen
+    }
+
+    // Reads the agents again, as each open does: at each dictating press,
+    // so a switch during the hold steps through the agents there are now.
+    func reloadAgents() {
+        Task { await loadAgents() }
     }
 
     private func send() {

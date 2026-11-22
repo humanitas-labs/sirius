@@ -60,6 +60,10 @@ final class DictationPill: DictationObserver {
     // comes back at once still lets the shrink land and the sparkle read as
     // the pill settling rather than a glitch.
     static var transcribingHold: TimeInterval { scaleDuration + markHold }
+    // How long the pill stays on the new agent's logo after a switch during
+    // the hold (/), before the bars come back: longer than the open's hold,
+    // as this one is read, not glimpsed.
+    static var switchHold: TimeInterval { 0.6 * SpatialMotion.timeScale }
     // How long a late ⌃ takes to cross the opening logo back to the mark.
     nonisolated static let baseLogoSwap: TimeInterval = 0.15
     static var logoSwap: TimeInterval { baseLogoSwap * SpatialMotion.timeScale }
@@ -162,6 +166,32 @@ final class DictationPill: DictationObserver {
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.markHold) { [weak self] in
             MainActor.assumeIsolated {
                 guard let self, self.generation == shown, self.model.state == .mark else { return }
+                self.show(.recording)
+            }
+        }
+    }
+
+    // The hold's agent changed (/ during the hold): the pill goes back to
+    // its opening on the new agent's logo, or on the mark for an agent with
+    // none, holds switchHold, and returns to the bars. Recording carries on
+    // throughout. A second switch meanwhile starts the hold again on the
+    // next logo.
+    func switched(to logo: NSImage?) {
+        guard recording else { return }
+        let onMark = model.state == .mark
+        // Already on a logo: cross to the new one. From the bars the morph
+        // brings it in, so it is set still.
+        var swap = Transaction()
+        if onMark { swap.animation = .easeInOut(duration: Self.logoSwap) } else { swap.disablesAnimations = true }
+        withTransaction(swap) {
+            model.openLogo = logo
+            model.opensOnLogo = logo != nil
+        }
+        show(.mark)
+        let shown = generation
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.switchHold) { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.generation == shown, self.model.state == .mark, self.recording else { return }
                 self.show(.recording)
             }
         }

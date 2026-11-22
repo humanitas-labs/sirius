@@ -61,7 +61,7 @@ Dictation can mishear a word. Agents are told to read past that and to say how t
 |---|---|
 | Send | Return |
 | Start a new line | ⇧Return |
-| Switch to the next agent | ⌘/ or ⇧Tab, or click the agent beside the send button |
+| Switch to the next agent | ⌘/ or ⇧Tab, or click the agent beside the send button. While dictating into the composer, `/` does the same |
 | Attach files | Drag them onto the composer, or paste them |
 | Remove the last attachment | ⌘⌫ with the cursor at the start of the text |
 | Dictate into the composer | Hold `fn`; the words go into the text so you can edit them before sending |
@@ -231,6 +231,7 @@ The first three are the defaults and can be changed in Settings.
 |---|---|---|
 | Hold `fn` | Anywhere | Speak a message to an agent |
 | Hold ⌃ and `fn` | Anywhere | Dictate at the cursor |
+| `/` while holding `fn` | Anywhere | Next agent; the pill shows its logo, and what you say goes to it |
 | ⌘⇧J | Anywhere | Open the composer |
 | Return | Composer | Send |
 | ⇧Return | Composer | New line |

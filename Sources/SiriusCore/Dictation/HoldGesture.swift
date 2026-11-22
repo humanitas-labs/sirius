@@ -77,6 +77,9 @@ extension HoldKey {
 // - Once pasting, the paste modifier may go up or down again freely; the
 //   key's release ends the hold.
 // - A hold shorter than `minimumHold` is discarded.
+// - `/` during an agent hold steps the agent selector (`switches`); it is a
+//   key, not a modifier, so it never reaches `handle` and the hold carries
+//   on.
 public struct HoldGesture {
     // Gesture.minimumHold: holds shorter than this are taps or shortcuts.
     public static let minimumHold: TimeInterval = 0.3
@@ -116,6 +119,24 @@ public struct HoldGesture {
     }
 
     public var isHeld: Bool { phase != .idle }
+
+    // The `/` key, by position: the composer's ⌘/ uses the same keycode.
+    public static let switchKeycode: Int64 = 44
+
+    // An agent hold is recording, so `/` would switch its agent: the app
+    // listens for keys only while this holds (HoldMonitor's key tap).
+    public var switchesAgent: Bool {
+        if case .recording(_, .agent) = phase { return true }
+        return false
+    }
+
+    // Whether this key press, with these modifiers down, steps the agent
+    // selector rather than reaching the app in front: `/` during an agent
+    // hold, with no modifier but the hold key's own.
+    public func switches(keycode: Int64, flags: HoldModifiers) -> Bool {
+        switchesAgent && keycode == Self.switchKeycode
+            && flags.intersection(.chord).subtracting(key.flag).isEmpty
+    }
 
     // One flagsChanged event at `time` (seconds on a monotonic clock).
     public mutating func handle(keycode: Int64, flags: HoldModifiers, at time: TimeInterval) -> Action? {

@@ -1,6 +1,6 @@
 import Foundation
 
-// The composer's agent: the one the user chose, kept
+// The agent selector: the composer's agent, the one the user chose, kept
 // apart from the agents the host last listed. A list that momentarily lacks
 // the chosen agent (read before the host started, a registry reload) never
 // replaces the choice; only the user's own switch does. With no choice yet,

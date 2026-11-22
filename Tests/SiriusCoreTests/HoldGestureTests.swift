@@ -140,4 +140,36 @@ final class HoldGestureTests: XCTestCase {
         XCTAssertFalse(gesture.isHeld)
         XCTAssertNil(gesture.setKey(.control))
     }
+
+    // `/` steps the agent selector only while an agent hold records, and
+    // only with no modifier but the hold key's own.
+    func testSlashSwitchesTheAgentOnlyDuringAnAgentHold() {
+        let slash = HoldGesture.switchKeycode
+        var gesture = HoldGesture(key: .fn)
+        XCTAssertFalse(gesture.switches(keycode: slash, flags: []), "no hold")
+        XCTAssertEqual(gesture.handle(keycode: fn, flags: .fn, at: 0), .start(.agent))
+        XCTAssertTrue(gesture.switchesAgent)
+        XCTAssertTrue(gesture.switches(keycode: slash, flags: .fn))
+        XCTAssertFalse(gesture.switches(keycode: 0, flags: .fn), "another key")
+        XCTAssertFalse(gesture.switches(keycode: slash, flags: [.fn, .command]), "⌘/ is the app's")
+        // ⌃ joins: a paste hold types its `/`.
+        XCTAssertEqual(gesture.handle(keycode: leftControl, flags: [.control, .fn], at: 0.1), .paste)
+        XCTAssertFalse(gesture.switches(keycode: slash, flags: [.control, .fn]))
+        XCTAssertEqual(gesture.handle(keycode: fn, flags: .control, at: 1), .transcribe)
+        XCTAssertFalse(gesture.switches(keycode: slash, flags: []), "released")
+    }
+
+    func testSlashIsLeftAloneInAChordAndSwitchesUnderAModifierHoldKey() {
+        let slash = HoldGesture.switchKeycode
+        // A chord on the key is ignored, and so is its `/`.
+        var gesture = HoldGesture(key: .fn)
+        XCTAssertNil(gesture.handle(keycode: fn, flags: [.shift, .fn], at: 0))
+        XCTAssertFalse(gesture.switches(keycode: slash, flags: [.shift, .fn]))
+        // Right ⌘ held to talk: its own flag is not a chord, so `/` switches
+        // and the app never sees a ⌘/.
+        var command = HoldGesture(key: .rightCommand)
+        XCTAssertEqual(command.handle(keycode: rightCommand, flags: .command, at: 0), .start(.agent))
+        XCTAssertTrue(command.switches(keycode: slash, flags: .command))
+        XCTAssertFalse(command.switches(keycode: slash, flags: [.command, .shift]))
+    }
 }
