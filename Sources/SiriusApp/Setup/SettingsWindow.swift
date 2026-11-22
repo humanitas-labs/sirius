@@ -14,10 +14,10 @@ import SwiftUI
 // It shows only what Sirius stores: the two shortcuts (Shortcuts, through
 // ShortcutsModel), the grants (GrantsModel, read live), each agent's
 // agent.json (workspace, fast mode, model, effort) and the dictation model
-// (UserDefaults' dictation.model, shown, not changed). Each change writes
-// straight through: an agent's agent.json is written at once and the host
-// reloads it, restarting that agent, as Parrot's window writes its
-// settings.json.
+// (UserDefaults' dictation.model, chosen here and applied at once). Each
+// change writes straight through: an agent's agent.json is written at once
+// and the host reloads it, restarting that agent, as Parrot's window writes
+// its settings.json.
 //
 // One instance: opening it again brings the same window forward. Esc steps
 // back from an agent to the list, and otherwise closes, as ⌘W does.
@@ -30,16 +30,19 @@ final class SettingsWindow {
     private let detector: AgentDetector
     private let shortcuts: ShortcutsModel
     private let onSave: () -> Void
+    // Told the dictation model chosen in this window, to apply it at once.
+    private let onDictationModel: (String) -> Void
     private var window: NSWindow?
     private var model: SettingsModel?
     private lazy var delegate = Delegate(owner: self)
 
     init(registry: AgentRegistry, shortcuts: ShortcutsModel, detector: AgentDetector = AgentDetector(),
-         onSave: @escaping () -> Void) {
+         onSave: @escaping () -> Void = {}, onDictationModel: @escaping (String) -> Void = { _ in }) {
         self.registry = registry
         self.shortcuts = shortcuts
         self.detector = detector
         self.onSave = onSave
+        self.onDictationModel = onDictationModel
     }
 
     func show() {
@@ -51,7 +54,8 @@ final class SettingsWindow {
         let agents = AgentChoice.choices(existing: existing, detector: detector)
         let registry = registry
         let model = SettingsModel(agents: agents, shortcuts: shortcuts, dictation: DictationModel().model,
-                                  write: { try registry.register($0) }, onSave: onSave)
+                                  write: { try registry.register($0) }, onSave: onSave,
+                                  onDictationModel: onDictationModel)
         self.model = model
         let window = NSWindow(contentRect: NSRect(origin: .zero, size: Self.size),
                               styleMask: [.titled, .closable, .resizable, .fullSizeContentView],
@@ -145,7 +149,10 @@ final class SettingsModel: ObservableObject {
     let shortcuts: ShortcutsModel
     let grants = GrantsModel()
     let context: ContextSettings
-    let dictation: TranscriptionModel
+    @Published private(set) var dictation: TranscriptionModel
+    // The models the Dictation picker offers, in the registry's order
+    // (DictationModel.catalog), sizes and all.
+    let dictationOptions: [TranscriptionModel]
     weak var window: NSWindow?
     var close: () -> Void = {}
 
@@ -156,21 +163,30 @@ final class SettingsModel: ObservableObject {
     // written by Sirius.
     let trusted: @Sendable (AgentRegistration.Harness) -> [String]
     private let onSave: () -> Void
+    private let defaults: UserDefaults
+    // Told the model chosen in Settings → Dictation, to apply it at once
+    // (DictationService.applyModel in the app).
+    private let onDictationModel: (String) -> Void
     private var forwarding: [AnyCancellable] = []
 
     init(agents: [AgentChoice], shortcuts: ShortcutsModel, dictation: TranscriptionModel,
          section: SettingsSection = .general, context: ContextSettings? = nil,
          trusted: @escaping @Sendable (AgentRegistration.Harness) -> [String] = { TrustedFolders().folders(for: $0) },
-         write: @escaping (AgentRegistration) throws -> Void, onSave: @escaping () -> Void = {}) {
+         defaults: UserDefaults = .standard,
+         write: @escaping (AgentRegistration) throws -> Void, onSave: @escaping () -> Void = {},
+         onDictationModel: @escaping (String) -> Void = { _ in }) {
         self.trusted = trusted
         self.agents = agents
         self.shortcuts = shortcuts
         self.dictation = dictation
+        self.dictationOptions = DictationModel.catalog
         self.section = section
         let context = context ?? ContextSettings()
         self.context = context
         self.write = write
+        self.defaults = defaults
         self.onSave = onSave
+        self.onDictationModel = onDictationModel
         let children = agents.map(\.objectWillChange) + [grants.objectWillChange, shortcuts.objectWillChange, context.objectWillChange]
         forwarding = children.map { $0.sink { [weak self] _ in self?.objectWillChange.send() } }
     }
@@ -235,6 +251,25 @@ final class SettingsModel: ObservableObject {
     static func dictationNote(_ model: TranscriptionModel) -> String {
         let languages = model.languages == ["en"] ? "English only" : "Multilingual" // TODO(copy): copy
         return "\(languages) · \(model.sizeMB) MB · shared with Parrot" // TODO(copy): copy
+    }
+
+    // A model's line in the Dictation picker.
+    static func dictationOptionLabel(_ model: TranscriptionModel) -> String {
+        let languages = model.languages == ["en"] ? "English only" : "Multilingual"
+        return "\(model.displayName) · \(languages) · \(model.sizeMB) MB" // TODO(copy): copy
+    }
+
+    // The Dictation picker's choice, written through to UserDefaults'
+    // dictation.model (DictationModel reads it at each load) and told to
+    // the app, which applies it at once. Nothing is written for the model
+    // already in use.
+    func selectDictation(model: TranscriptionModel) {
+        guard model.id != dictation.id else { return }
+        objectWillChange.send()
+        dictation = model
+        defaults.set(model.id, forKey: DictationModel.defaultsKey)
+        SiriusLog.onboarding.info("settings: \(DictationModel.defaultsKey) \(model.id)")
+        onDictationModel(model.id)
     }
 }
 

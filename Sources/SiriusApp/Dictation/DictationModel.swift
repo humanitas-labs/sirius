@@ -2,15 +2,24 @@ import Foundation
 import ParrotCore
 import SiriusCore
 
-// The speech model dictation uses: whisper-base.en unless
+// The speech model dictation uses: whisper-small.en unless
 // UserDefaults' `dictation.model` names another in ParrotCore's registry
 // (Sirius keeps its own setting, beside `composer.last_agent`, not read from
-// Parrot's settings.json). The weights
+// Parrot's settings.json). The registry's models are the picker in Settings
+// → Dictation (ModelRegistry.shared); a choice made there is applied at
+// once (DictationService.applyModel). The weights
 // live in Parrot's folder (Paths.appSupport), so a Parrot user downloads
-// nothing new (dictation.md §2).
+// nothing new for a model Parrot already has (dictation.md §2).
+//
+// whisper-small.en is the default since it holds about a third of
+// whisper-base.en's errors on English at three times the download, and
+// still transcribes a held sentence in a fraction of a second on Apple
+// Silicon; whisper-large-v3-turbo, the registry's most accurate, is one
+// picker click away for those who want it (docs/dictation.md lists the
+// candidates considered, Parakeet among them).
 @MainActor
 final class DictationModel {
-    static let defaultID = "whisper-base.en"
+    static let defaultID = "whisper-small.en"
     static let defaultsKey = "dictation.model"
 
     let model: TranscriptionModel
@@ -26,6 +35,9 @@ final class DictationModel {
             model = ModelRegistry.find(Self.defaultID) ?? ModelRegistry.recommended() ?? ModelRegistry.shared[0]
         }
     }
+
+    // Every model the picker can offer, in the registry's order.
+    static var catalog: [TranscriptionModel] { ModelRegistry.shared }
 
     // Where WhisperKitTranscriber.warmUp puts the model:
     // WhisperKit.download(variant:downloadBase:) under Paths.appSupport,

@@ -49,7 +49,7 @@ If you use Parrot with `fn` as its key, quit Parrot, or the key is handled twice
 * **To pick an agent, say its name first:** "Claude, …", "Codex, …", "Cursor, …", "Gemini, …" or "Muse, …". Without a name, the message goes to the agent you last chose in the composer.
 * **To dictate into any app, hold ⌃ and `fn`.** What you said is pasted where your cursor is, and no agent is involved. You can choose another modifier than ⌃ in Settings… → General.
 
-Speech is turned into text on your Mac. The first time, Sirius downloads the speech model (about 145 MB), and the pill shows the progress. If you already use Parrot, Sirius uses Parrot's model and your dictionary at `~/.config/parrot/dictionary`.
+Speech is turned into text on your Mac. The first time, Sirius downloads the speech model — Whisper Small (English), about 488 MB — and the pill shows the progress. If you already use Parrot, Sirius shares Parrot's model folder and your dictionary at `~/.config/parrot/dictionary`, so a model Parrot has costs nothing new. In Settings… → Dictation you can pick a bigger model: Whisper Large v3 Turbo is the most accurate, at 1.6 GB, and a choice takes effect on your next words.
 
 Dictation can mishear a word. Agents are told to read past that and to say how they understood you, so a wrong reading is quick to correct.
 
@@ -168,7 +168,7 @@ Open **Settings…** from the menu-bar menu, or press ⌘, while the menu is ope
 | Context | Use ambient context | Off: no message carries context from any app |
 | Context | Warn before sending from sensitive apps | On: Sirius asks once more before a message carries context from Mail or Chrome |
 | Context | One switch per app | The apps that provide context, and the apps Sirius reads (§5) |
-| Dictation | Model | Shows the speech model in use and its size. It cannot be changed here. |
+| Dictation | Model | The speech model in use, its size and its languages. Choose another from the list; the next words you say are transcribed with it, and a model not on disk downloads first, with its progress in the pill. |
 
 The window also shows the version of Sirius you are running.
 
@@ -216,6 +216,7 @@ Sirius is signed and notarized, so the permissions you allowed stay allowed afte
 * Check that Microphone says Allowed, and that the right microphone is chosen in System Settings → Sound → Input.
 * The first use waits for the speech model to download.
 * For names it keeps getting wrong, add them to `~/.config/parrot/dictionary`.
+* Still mishearing? A bigger model helps: Settings… → Dictation offers Whisper Large v3 Turbo, the most accurate, at 1.6 GB.
 
 **No notifications.** Open System Settings → Notifications → Sirius and allow them. Toasts do not depend on this.
 

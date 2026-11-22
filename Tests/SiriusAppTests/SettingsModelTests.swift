@@ -129,4 +129,33 @@ final class SettingsModelTests: XCTestCase {
         let base = try XCTUnwrap(ModelRegistry.find(DictationModel.defaultID))
         XCTAssertEqual(SettingsModel.dictationNote(base), "English only · \(base.sizeMB) MB · shared with Parrot")
     }
+
+    // The Dictation picker: a choice is written through to UserDefaults (so
+    // it outlives the app) and told to the app at once; the model in use
+    // writes nothing.
+    func testTheDictationPickerWritesThroughAndTellsTheApp() throws {
+        let suite = "settings-dictation-\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suite)!
+        addTeardownBlock { defaults.removePersistentDomain(forName: suite) }
+        var applied: [String] = []
+        let agents = AgentChoice.choices(existing: [], detector: AgentDetector())
+        for agent in agents { agent.simulateFound("/bin/sh") }
+        let model = SettingsModel(agents: agents, shortcuts: ShortcutsModel(compose: .compose, holdKey: .fn),
+                                  dictation: ModelRegistry.shared[0], defaults: defaults,
+                                  write: { _ in }, onDictationModel: { applied.append($0) })
+
+        let large = try XCTUnwrap(ModelRegistry.find("whisper-large-v3-turbo"))
+        model.selectDictation(model: large)
+        XCTAssertEqual(model.dictation.id, "whisper-large-v3-turbo")
+        XCTAssertEqual(defaults.string(forKey: DictationModel.defaultsKey), "whisper-large-v3-turbo")
+        XCTAssertEqual(applied, ["whisper-large-v3-turbo"])
+
+        model.selectDictation(model: large)
+        XCTAssertEqual(applied.count, 1, "the model in use tells the app nothing")
+
+        // The picker's line names the model, its languages and its size.
+        XCTAssertEqual(SettingsModel.dictationOptionLabel(large), "Whisper Large v3 Turbo · Multilingual · 1620 MB")
+        XCTAssertEqual(SettingsModel.dictationOptionLabel(try XCTUnwrap(ModelRegistry.find("whisper-small.en"))),
+                       "Whisper Small (English) · English only · 488 MB")
+    }
 }
