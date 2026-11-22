@@ -7,7 +7,10 @@ import SiriusProtocol
 // never prints or exits; the helper maps the Outcome to its own output.
 public struct SiriusClient: Sendable {
     public var socketPath: String
-    // Covers connect, write and read together.
+    // The base of the wait for the receipt, covering connect, write and
+    // read together. A frame larger than Limits.freeFrameBytes adds a
+    // transfer allowance to it (SiriusEnvironment.receiptTimeout), so a
+    // long response waits longer than a short one.
     public var timeout: TimeInterval
 
     public init(socketPath: String, timeout: TimeInterval = TimeInterval(SiriusEnvironment.defaultTimeoutSeconds)) {
@@ -57,11 +60,15 @@ public struct SiriusClient: Sendable {
         return exchange(frame: frame, id: request.id)
     }
 
-    // The transport alone, for a frame that is already encoded.
+    // The transport alone, for a frame that is already encoded. The wait
+    // scales with the frame's size: a long response is not cut short by a
+    // deadline sized for a short one (SiriusEnvironment.receiptTimeout).
     public func exchange(frame: Data, id: RequestId) -> Outcome {
         let line: Data
         do {
-            line = try UnixSocket.exchange(path: socketPath, frame: frame, timeout: timeout)
+            line = try UnixSocket.exchange(
+                path: socketPath, frame: frame,
+                timeout: SiriusEnvironment.receiptTimeout(base: timeout, frameBytes: frame.count))
         } catch let failure as TransportFailure {
             return failure.outcome
         } catch {

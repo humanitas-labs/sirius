@@ -8,9 +8,9 @@ struct Sirius: ParsableCommand {
         commandName: "sirius",
         abstract: "Reach the user through Sirius: a toast, a notification or speech.",
         discussion: """
-            Sends one request to the Sirius app over $SIRIUS_SOCKET and waits up to \
-            $SIRIUS_TIMEOUT seconds (default \(SiriusEnvironment.defaultTimeoutSeconds)) for the \
-            receipt. Prints nothing on success. Never retries.
+            Sends one request to the Sirius app over $SIRIUS_SOCKET and waits \
+            $SIRIUS_TIMEOUT seconds (default \(SiriusEnvironment.defaultTimeoutSeconds)), plus a transfer \
+            allowance for long content, for the receipt. Prints nothing on success. Never retries.
 
             Text is the remaining arguments joined with single spaces, like echo. Put "--" before \
             text that starts with "-": sirius display toast -- -1 failed

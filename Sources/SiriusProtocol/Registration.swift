@@ -108,4 +108,11 @@ public enum SiriusEnvironment {
     public static let socket = "SIRIUS_SOCKET"
     public static let timeout = "SIRIUS_TIMEOUT"
     public static let defaultTimeoutSeconds = 10
+
+    // What a helper waits for its receipt: the base (SIRIUS_TIMEOUT, or
+    // defaultTimeoutSeconds) plus a transfer allowance for the frame's size
+    // (Limits.frameBytesPerSecond beyond Limits.freeFrameBytes).
+    public static func receiptTimeout(base: TimeInterval, frameBytes: Int) -> TimeInterval {
+        base + Double(max(0, frameBytes - Limits.freeFrameBytes)) / Double(Limits.frameBytesPerSecond)
+    }
 }

@@ -76,14 +76,60 @@ final class SiriusClientTests: XCTestCase {
     // reading cannot hold the helper past SIRIUS_TIMEOUT.
     func testWriteDeadline() throws {
         let server = try FakeServer(.neverRead)
-        let big = JSONValue.object(["kind": .string("toast"), "content": .string(String(repeating: "x", count: 4 << 20))])
+        // Under Limits.freeFrameBytes, so the wait is the base alone.
+        let small = JSONValue.object(["kind": .string("toast"), "content": .string(String(repeating: "x", count: 1024))])
         let start = ContinuousClock.now
-        let outcome = SiriusClient(socketPath: server.path, timeout: 0.3).call(.display, params: big)
+        let outcome = SiriusClient(socketPath: server.path, timeout: 0.3).call(.display, params: small)
         let elapsed = ContinuousClock.now - start
         server.stop()
         XCTAssertEqual(outcome, .unknown(.timedOut))
         XCTAssertGreaterThanOrEqual(elapsed, .milliseconds(300))
         XCTAssertLessThan(elapsed, .seconds(2))
+    }
+
+    // MARK: - The receipt wait scales with the frame's size
+
+    func testTheWaitIsTheBaseUnderTheFreeBytes() {
+        XCTAssertEqual(SiriusEnvironment.receiptTimeout(base: 10, frameBytes: 0), 10)
+        XCTAssertEqual(SiriusEnvironment.receiptTimeout(base: 10, frameBytes: Limits.freeFrameBytes), 10)
+        XCTAssertEqual(SiriusEnvironment.receiptTimeout(base: 2.5, frameBytes: 1024), 2.5)
+    }
+
+    func testTheWaitGrowsOneSecondPerRateBeyondTheFreeBytes() {
+        XCTAssertEqual(SiriusEnvironment.receiptTimeout(base: 10, frameBytes: Limits.freeFrameBytes + Limits.frameBytesPerSecond),
+                       11)
+        // The largest frame the app accepts, from the smallest useful base.
+        XCTAssertEqual(SiriusEnvironment.receiptTimeout(base: 2.5, frameBytes: Limits.maxRequestBytes), 18.375)
+    }
+
+    // A long response is not cut short by a deadline sized for a short one:
+    // the app answers after the base would have run out, within the
+    // allowance the frame's size earns it.
+    func testALongResponseOutlastsTheBaseDeadline() throws {
+        let big = JSONValue.object(["kind": .string("toast"), "content": .string(String(repeating: "x", count: 512 * 1024))])
+        let server = try FakeServer(.reply { frame in
+            Thread.sleep(forTimeInterval: 0.8)
+            return respond(frame, result: #"{"delivered":true}"#)
+        })
+        // The scaled wait is about 0.3 + 0.9 s; the base alone would end at 0.3 s.
+        let outcome = SiriusClient(socketPath: server.path, timeout: 0.3).call(.display, params: big)
+        server.stop()
+        XCTAssertEqual(outcome, .result(.object(["delivered": .bool(true)])))
+    }
+
+    // A frame that never drains is given up on within its scaled wait, not
+    // the base alone and not forever.
+    func testTheWriteDeadlineScalesWithTheFrame() throws {
+        let server = try FakeServer(.neverRead)
+        let big = JSONValue.object(["kind": .string("toast"), "content": .string(String(repeating: "x", count: 1 << 20))])
+        let start = ContinuousClock.now
+        let outcome = SiriusClient(socketPath: server.path, timeout: 0.3).call(.display, params: big)
+        let elapsed = ContinuousClock.now - start
+        server.stop()
+        XCTAssertEqual(outcome, .unknown(.timedOut))
+        // 0.3 s plus the 1 MiB allowance (~1.9 s), with room for scheduling.
+        XCTAssertGreaterThanOrEqual(elapsed, .seconds(2))
+        XCTAssertLessThan(elapsed, .seconds(4))
     }
 
     func testClosedWithoutResponseIsUnknown() throws {

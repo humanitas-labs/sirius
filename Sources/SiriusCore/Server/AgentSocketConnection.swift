@@ -22,6 +22,9 @@ final class AgentSocketConnection: @unchecked Sendable {
     private var writeSource: DispatchSourceWrite?
     private var deadline: DispatchSourceTimer?
     private var pending = Data()
+    // When the whole frame's budget runs out; re-arming the inactivity
+    // window on each chunk cannot push a read past it.
+    private var readEnd: DispatchTime = .distantFuture
     // Oversize: the error is written, the rest of the input read and dropped.
     private var draining = false
     private var peerClosed = false
@@ -45,6 +48,11 @@ final class AgentSocketConnection: @unchecked Sendable {
 
     func start() {
         dispatchPrecondition(condition: .onQueue(io))
+        // A frame may take readBudgetSeconds however slowly it is written,
+        // with readDeadlineSeconds as the window a chunk must arrive within
+        // (Limits): progress re-arms the window, never the budget.
+        readEnd = DispatchTime(uptimeNanoseconds:
+            DispatchTime.now().uptimeNanoseconds + UInt64(settings.readBudget * 1_000_000_000))
         arm(settings.readDeadline)
         let source = DispatchSource.makeReadSource(fileDescriptor: fd, queue: io)
         source.setEventHandler { [unowned self] in readable() }
@@ -89,12 +97,23 @@ final class AgentSocketConnection: @unchecked Sendable {
         if draining { return }
         switch accumulator.append(chunk[0..<count]) {
         case .needMore:
+            // Progress re-arms the inactivity window, bounded by the budget.
+            rearmRead()
             return
         case .frame(let frame):
             received(frame)
         case .oversize(let received):
             rejectOversize(received: received)
         }
+    }
+
+    // The next chunk must arrive within the window, and the whole frame
+    // within the budget: a slow but steady writer finishes, a stalled one
+    // still ends at the window, and neither outlives the budget.
+    private func rearmRead() {
+        let left = readEnd.secondsFromNow
+        guard left > 0 else { return finish() }
+        arm(min(settings.readDeadline, left))
     }
 
     private func stopReading() {
