@@ -28,6 +28,11 @@ final class AgentChoice: ObservableObject, Identifiable {
     // Whether Sirius runs the agent (agent.json's `enabled`). Off keeps
     // its registration, folder and session.
     @Published var enabled: Bool
+    // The models this user's OpenCode offers, read from its own CLI in a
+    // throwaway session (OpenCodeModels) when the CLI is found: its models
+    // are the account's own, so no fixed list can ship. Empty until the
+    // read lands, and for every other harness.
+    @Published private(set) var offered: [Model] = []
 
     // The harness's own most recently used trusted folder, offered to a
     // new agent; nil for one already registered, which keeps its folder.
@@ -115,13 +120,29 @@ final class AgentChoice: ObservableObject, Identifiable {
     var name: String { Self.name(harness) }
 
     // The shell lookup can take a few seconds; it runs off the main thread.
+    // For OpenCode, once the CLI is found its offered models are read the
+    // same way, once per window.
     func detect() {
         let detector = detector
         let harness = harness
         Task.detached {
             let path = detector.find(harness)
             await MainActor.run { self.setExecutable(path) }
+            guard harness == .opencode, let path else { return }
+            let directory = await MainActor.run { self.root }
+                ?? FileManager.default.homeDirectoryForCurrentUser.path
+            let offered = await OpenCodeModels.offered(
+                executable: URL(fileURLWithPath: path),
+                directory: URL(fileURLWithPath: directory, isDirectory: true))
+            await MainActor.run { self.setOffered(offered ?? []) }
         }
+    }
+
+    // The read landed (nil answered, or it failed): an empty list keeps
+    // the menu as it was, and a second read never replaces the first.
+    private func setOffered(_ models: [OpenCodeModels.Offered]) {
+        guard offered.isEmpty, !models.isEmpty else { return }
+        offered = models.map { Model($0.id, $0.name ?? $0.id) }
     }
 
     // A debug path (OnboardingSnapshots): found at `path`, no lookup.
@@ -316,11 +337,11 @@ extension AgentChoice {
     // session (2026.08.11) offers, the main ones of each maker out of its
     // fifty; Antigravity's are the four a free account's `agy acp` session
     // (1.5.11) offers, so the Gemini 4 models of a paid plan are not here.
-    // Muse's are not known, so it has none. OpenCode's are the enabled
-    // models of the user's own providers, different for every account, so
-    // it has none either: a model written by hand (provider/model, e.g.
-    // anthropic/claude-sonnet-5-5) still shows in the menu, and the session
-    // refuses one it does not offer (checked on 2.3.2, 2026.11.22).
+    // Muse's are not known, so it has none. OpenCode's are the account's
+    // own, so they are read from its CLI at setup (OpenCodeModels) and
+    // this list stays empty for it: a model written by hand still shows in
+    // the menu, and the session refuses one it does not offer (checked on
+    // 2.3.2, 2026.11.22).
     static func models(_ harness: AgentRegistration.Harness) -> [Model] {
         switch harness {
         case .claudeCode: [
@@ -380,19 +401,23 @@ extension AgentChoice {
     // person's own default model in ~/.cursor/cli-config.json.
     var takesEffort: Bool { harness != .cursor }
 
-    // The Model menu: nil (the user's default), the harness's main models,
-    // and one written by hand that is not among them, kept so it shows.
+    // The Model menu: nil (the user's default), the harness's main models —
+    // for OpenCode, the ones its own CLI offered — and one written by hand
+    // that is not among them, kept so it still shows.
     var modelOptions: [String?] {
-        let known = Self.models(harness).map(\.id)
+        let known = Self.models(harness).map(\.id) + offered.map(\.id)
         var options: [String?] = [nil] + known.map { $0 }
         if let model, !known.contains(model) { options.append(model) }
         return options
     }
 
-    // A model's name in the menu: its maker's name, or the id as written.
+    // A model's name in the menu: its maker's name, the one its CLI
+    // offered, or the id as written.
     func modelLabel(_ model: String?) -> String {
         guard let model else { return "Default" } // TODO(copy): copy
-        return Self.models(harness).first { $0.id == model }?.name ?? model
+        return Self.models(harness).first { $0.id == model }?.name
+            ?? offered.first { $0.id == model }?.name
+            ?? model
     }
 
     static func effortLabel(_ effort: String?) -> String {

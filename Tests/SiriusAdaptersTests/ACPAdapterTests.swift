@@ -182,7 +182,7 @@ final class ACPAdapterTests: XCTestCase {
             XCTFail("open should throw")
         } catch let error as ACPAdapterError {
             XCTAssertEqual(error, .modelUnavailable(product: "OpenCode", "anthropic/nonexistent",
-                                                    available: ["opencode-go/hy3", "anthropic/claude-sonnet-5-5"]))
+                                                    available: ["anthropic/claude-sonnet-5-5", "opencode-go/hy3"]))
             XCTAssertNotNil(error.userMessage)
         }
         let pid = await adapter.processIdentifier

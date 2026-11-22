@@ -65,8 +65,8 @@ enum ACPFakeAgent {
     def oc_options():
         return [
             {"id": "model", "name": "Model", "category": "model", "type": "select", "currentValue": oc_model,
-             "options": [{"value": "opencode-go/hy3", "name": "HY3"},
-                         {"value": "anthropic/claude-sonnet-5-5", "name": "Claude Sonnet 5.5"}]},
+             "options": [{"value": "anthropic/claude-sonnet-5-5", "name": "Claude Sonnet 5.5"},
+                         {"value": "opencode-go/hy3", "name": "HY3"}]},
             {"id": "effort", "name": "Effort", "category": "thought_level", "type": "select",
              "currentValue": oc_effort,
              "options": [{"value": "default", "name": "Default"}, {"value": "low", "name": "Low"},
