@@ -71,7 +71,7 @@ Typing `->` makes an arrow, →. Undo (⌘Z) turns it back.
 
 The agent shown beside the send button is the one that gets the message. It is also the one your next spoken message goes to when you do not say a name.
 
-If the agent is busy, your message waits and is delivered when its current turn ends.
+**Where your message goes.** One message is one turn: the agent answers it, and the next message's turn begins only then. Sent while the agent is working, your words join the running turn with Claude, Codex and Muse; the other agents hold them for the turn's end. Nothing is lost in between: a turn cut short by a restart is never repeated, and a message that never reached the agent is resent once Sirius opens again. The agent keeps the whole conversation in its own session — a follow-up needs no repeating of what you said — and one file, `~/.agents/WMEM.md`, is shared between agents, so a reference like "the report from yesterday" survives a change of agent.
 
 ## 5. What your agent sees
 
