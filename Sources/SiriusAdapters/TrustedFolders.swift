@@ -11,8 +11,9 @@ import SiriusProtocol
 // per folder with `decision` "trusted"), with no last-use time.
 // Antigravity keeps them in ~/.gemini/antigravity-cli/settings.json
 // (`trustedWorkspaces`, a list of paths), with no last-use time either.
-// Cursor's CLI does not document where it keeps its own, so it has none
-// here and its agent's folder is chosen by hand.
+// Cursor's CLI does not document where it keeps its own, and OpenCode
+// keeps its projects in a SQLite database rather than a readable file, so
+// both have none here and their agents' folders are chosen by hand.
 //
 // Only the keys named here are read. ~/.claude.json holds much else; none of
 // it is decoded, logged or copied.
@@ -80,6 +81,13 @@ public struct TrustedFolders: Sendable {
             else { return [] }
             found = Self.antigravity(json: data)
         case .cursor:
+            return []
+        case .opencode:
+            // OpenCode has no trust gate of its own: it works in any
+            // folder, asking permission for each action. Its project list
+            // lives in a SQLite database (~/.local/share/opencode/
+            // opencode.db), which Sirius does not read; its agent's folder
+            // is chosen by hand, as Cursor's is.
             return []
         }
         return rank(found)

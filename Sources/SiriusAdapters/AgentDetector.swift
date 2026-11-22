@@ -13,6 +13,7 @@ public struct AgentDetector: Sendable {
         case .museCode: "muse"
         case .cursor: "agent"
         case .antigravity: "agy"
+        case .opencode: "opencode"
         }
     }
 
@@ -25,8 +26,10 @@ public struct AgentDetector: Sendable {
     // Install locations, relative to the home folder or absolute: Claude's
     // native installer (~/.local/bin), its older local install
     // (~/.claude/local), Homebrew, npm, bun, Volta and pnpm globals.
+    // ~/.opencode/bin is OpenCode's own installer's (v2's) location, which
+    // it adds to the shell's PATH.
     public static let searchDirectories = [
-        "~/.local/bin", "~/.claude/local", "/opt/homebrew/bin", "/usr/local/bin",
+        "~/.local/bin", "~/.claude/local", "~/.opencode/bin", "/opt/homebrew/bin", "/usr/local/bin",
         "~/.npm-global/bin", "~/.bun/bin", "~/.volta/bin", "~/Library/pnpm",
     ]
 

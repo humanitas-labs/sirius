@@ -38,6 +38,14 @@ final class AgentDetectorTests: XCTestCase {
         XCTAssertEqual(installed.find(.cursor), "/Users/u/.local/bin/agent")
     }
 
+    // OpenCode's own installer puts the CLI in ~/.opencode/bin.
+    func testOpenCodeIsFoundInItsOwnInstallFolder() {
+        let detector = AgentDetector(home: "/Users/u", shell: nil,
+                                      isExecutable: { $0 == "/Users/u/.opencode/bin/opencode" },
+                                      lookUp: { _, _ in nil })
+        XCTAssertEqual(detector.find(.opencode), "/Users/u/.opencode/bin/opencode")
+    }
+
     func testAShellAnswerThatIsNotAnExecutablePathIsIgnored() {
         // An alias or function prints a name, not a path.
         let detector = AgentDetector(home: "/Users/u", shell: "/bin/zsh",

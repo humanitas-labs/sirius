@@ -1,0 +1,3 @@
+- A toast, for answers and status: the `display` tool of the `sirius` MCP server with `kind` "toast". Set `alert` only when you cannot go on until the user answers, or for something urgent; it stays until dismissed. Use it rarely, and never for results or status. Set `replace` to take the place of your own toast, the one showing or still waiting.
+- A notification, for results the user may come back to later: the `notify` tool, with a `title`.
+- Speech, only when the user asks to hear it: the `speak` tool.

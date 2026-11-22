@@ -16,7 +16,7 @@ The wire contract is [protocol/proto.ts](protocol/proto.ts). Each part below is 
    - [5.1 — Claude Code, warm headless](#51--claude-code-warm-headless)
    - [5.2 — Codex, app-server](#52--codex-app-server)
    - [5.3 — Claude Code, live session](#53--claude-code-live-session)
-   - [5.4 — ACP agents: Cursor and Antigravity](#54--acp-agents-cursor-and-antigravity)
+   - [5.4 — ACP agents: Cursor, Antigravity and OpenCode](#54--acp-agents-cursor-antigravity-and-opencode)
 6. [Files on disk](#6-files-on-disk)
 7. [Code layout](#7-code-layout)
 8. [Open](#8-open)
@@ -134,9 +134,9 @@ Codex uses `sirius-mcp` rather than `sirius` because its sandbox without network
 
 Plan §7 ships it at launch; the schema's `harness` field has no value for it yet. The user points an agent at a session they already have open, and Sirius writes the Message to that session's socket: 2.0–2.3 s. No reply comes back on the socket, so the turn end is read from the transcript. The session needs `sirius` allowed in its own permissions.
 
-### 5.4 — ACP agents: Cursor and Antigravity
+### 5.4 — ACP agents: Cursor, Antigravity and OpenCode
 
-Run live against Cursor's CLI `2026.08.11` and Antigravity's `1.5.11` on 2026.11.18: a toast and a reopened session on each. Any agent with an Agent Client Protocol server (version 1, JSON-RPC over stdio) runs through one adapter, `ACPAdapter`, and what is the CLI's own is a profile: Cursor's `agent acp` and Antigravity's `agy acp`.
+Run live against Cursor's CLI `2026.08.11`, Antigravity's `1.5.11` (2026.11.18) and OpenCode's `2.3.2` (2026.11.22): a toast and a reopened session on each. Any agent with an Agent Client Protocol server (version 1, JSON-RPC over stdio) runs through one adapter, `ACPAdapter`, and what is the CLI's own is a profile: Cursor's `agent acp`, Antigravity's `agy acp` and OpenCode's `opencode acp`. OpenCode has no trusted-folder file Sirius reads (its projects live in a SQLite database), so its agent's folder is chosen by hand, as Cursor's is.
 
 | Job | ACP |
 |---|---|

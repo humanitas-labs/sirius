@@ -169,8 +169,22 @@ final class AgentChoiceSettingsTests: XCTestCase {
         try Data("<svg>\n  <!-- simple-icons 15.16.0 (CC0), icons/meta.svg -->\n</svg>".utf8).write(to: seeded)
         let own = folder.appendingPathComponent("own.svg")
         try Data("<svg><path d=\"M0 0h24v24H0z\"/></svg>".utf8).write(to: own)
-        XCTAssertTrue(AgentMarks.isSeededCopy(seeded))
-        XCTAssertFalse(AgentMarks.isSeededCopy(own))
+        XCTAssertTrue(AgentMarks.isSeededCopy(seeded, harness: .museCode))
+        XCTAssertFalse(AgentMarks.isSeededCopy(own, harness: .museCode))
+
+        // A png copy is seeded only when it is the bundled default itself;
+        // one drawn by hand, or another harness's, is the person's own.
+        let marks = AgentMarks.directory
+        guard let defaultPNG = try? Data(contentsOf: marks.appendingPathComponent("opencode.png")) else {
+            return XCTFail("packaging/marks/opencode.png is missing")
+        }
+        let copied = folder.appendingPathComponent("copied.png")
+        try defaultPNG.write(to: copied)
+        let drawn = folder.appendingPathComponent("drawn.png")
+        try Data([0x89, 0x50, 0x4E, 0x47]).write(to: drawn)
+        XCTAssertTrue(AgentMarks.isSeededCopy(copied, harness: .opencode))
+        XCTAssertFalse(AgentMarks.isSeededCopy(drawn, harness: .opencode))
+        XCTAssertFalse(AgentMarks.isSeededCopy(copied, harness: .claudeCode))
     }
 
     func testCursorTakesNoEffortAndTheOthersDo() {

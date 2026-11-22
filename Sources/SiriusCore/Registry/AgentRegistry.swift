@@ -147,14 +147,19 @@ public struct AgentRegistry: Sendable {
     }
 
     // A harness's default mark in `marks`, the app's copy of packaging/marks:
-    // <harness>.svg, so a new harness needs only its file.
+    // <harness>.svg, or <harness>.png where the shape cannot be an svg.
+    // OpenCode's is a png: its frame has an enclosed hole, which NSImage's
+    // SVG rasterizer fills in, and no encoding of the file avoids that.
     public static func defaultIcon(harness: AgentRegistration.Harness, marks: URL) -> URL {
-        marks.appendingPathComponent("\(harness.rawValue).svg")
+        let svg = marks.appendingPathComponent("\(harness.rawValue).svg")
+        return FileManager.default.fileExists(atPath: svg.path)
+            ? svg : marks.appendingPathComponent("\(harness.rawValue).png")
     }
 
-    // Copies the harness's default mark into the agent's folder as icon.svg
-    // when the folder has no icon of any form; one already there is never
-    // replaced. Returns whether it copied; a missing default copies nothing.
+    // Copies the harness's default mark into the agent's folder, under the
+    // mark's own extension (icon.svg or icon.png), when the folder has no
+    // icon of any form; one already there is never replaced. Returns
+    // whether it copied; a missing default copies nothing.
     @discardableResult
     public func seedIcon(agent: String, harness: AgentRegistration.Harness, marks: URL) throws -> Bool {
         guard icon(agent: agent) == nil else { return false }
@@ -162,7 +167,8 @@ public struct AgentRegistry: Sendable {
         guard FileManager.default.fileExists(atPath: source.path) else { return false }
         let folder = directory.appendingPathComponent(agent, isDirectory: true)
         try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-        try FileManager.default.copyItem(at: source, to: folder.appendingPathComponent(Self.iconFiles[0]))
+        try FileManager.default.copyItem(at: source,
+                                         to: folder.appendingPathComponent("icon." + source.pathExtension))
         return true
     }
 

@@ -71,6 +71,7 @@ final class AgentChoice: ObservableObject, Identifiable {
         case .museCode: "Muse Code"
         case .cursor: "Cursor"
         case .antigravity: "Antigravity"
+        case .opencode: "OpenCode"
         }
     }
 
@@ -81,6 +82,7 @@ final class AgentChoice: ObservableObject, Identifiable {
         case .museCode: "Muse"
         case .cursor: "Cursor"
         case .antigravity: "Gemini"
+        case .opencode: "OpenCode"
         }
     }
 
@@ -92,6 +94,7 @@ final class AgentChoice: ObservableObject, Identifiable {
         case .museCode: "muse"
         case .cursor: "cursor"
         case .antigravity: "gemini"
+        case .opencode: "opencode"
         }
     }
 
@@ -99,11 +102,12 @@ final class AgentChoice: ObservableObject, Identifiable {
     // 2.9 s at the median against 4.2 s at its default, with no more misreads
     // (front-desk test 2026.10.27). Codex starts at low too;
     // its latency is not measured yet. Muse
-    // follows them; its latency is not measured either, nor Antigravity's.
-    // Cursor has no effort of its own: it is part of the model's name.
+    // follows them; its latency is not measured either, nor Antigravity's,
+    // nor OpenCode's. Cursor has no effort of its own: it is part of the
+    // model's name.
     static func defaultEffort(_ harness: AgentRegistration.Harness) -> String? {
         switch harness {
-        case .claudeCode, .codex, .museCode, .antigravity: "low"
+        case .claudeCode, .codex, .museCode, .antigravity, .opencode: "low"
         case .cursor: nil
         }
     }
@@ -261,7 +265,10 @@ extension AgentChoice {
     // The efforts each harness's CLI takes: Claude Code's --effort and
     // Codex's model_reasoning_effort, and Muse Code's reasoningEffort
     // without "none", which Meta's provider refuses. Antigravity's are
-    // the three thinking levels agy 1.5.11 offers; Cursor has none (see takesEffort).
+    // the three thinking levels agy 1.5.11 offers; OpenCode's are its
+    // thought_level config option's values, offered only for models with
+    // variants, and one that is not offered is left alone (ACPAdapter's
+    // configure). Cursor has none (see takesEffort).
     static func efforts(_ harness: AgentRegistration.Harness) -> [String] {
         switch harness {
         case .claudeCode: ["low", "medium", "high", "xhigh", "max"]
@@ -269,6 +276,7 @@ extension AgentChoice {
         case .museCode: ["minimal", "low", "medium", "high", "xhigh", "max", "ultra"]
         case .cursor: []
         case .antigravity: ["low", "medium", "high"]
+        case .opencode: ["low", "medium", "high"]
         }
     }
 
@@ -308,7 +316,11 @@ extension AgentChoice {
     // session (2026.08.11) offers, the main ones of each maker out of its
     // fifty; Antigravity's are the four a free account's `agy acp` session
     // (1.5.11) offers, so the Gemini 4 models of a paid plan are not here.
-    // Muse's are not known, so it has none.
+    // Muse's are not known, so it has none. OpenCode's are the enabled
+    // models of the user's own providers, different for every account, so
+    // it has none either: a model written by hand (provider/model, e.g.
+    // anthropic/claude-sonnet-5-5) still shows in the menu, and the session
+    // refuses one it does not offer (checked on 2.3.2, 2026.11.22).
     static func models(_ harness: AgentRegistration.Harness) -> [Model] {
         switch harness {
         case .claudeCode: [
@@ -350,6 +362,7 @@ extension AgentChoice {
             Model("claude-sonnet-4-6", "Claude Sonnet 4.6", .anthropic),
             Model("gpt-oss-120b-medium", "GPT-OSS 120B", .openai),
         ]
+        case .opencode: []
         }
     }
 

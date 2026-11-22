@@ -122,6 +122,73 @@ final class ACPAdapterTests: XCTestCase {
         XCTAssertEqual(methods(), ["initialize", "session/new"], "no auth method that could open a browser")
     }
 
+    // MARK: opencode
+
+    // The fake's "opencode" mode is the server as run against 2.3.2.
+    func testOpenCodeIsLaunchedForSiriusAndNeverSendsTheTerminalAuthMethod() async throws {
+        try ACPFakeAgent.set(mode: "opencode", in: root)
+        adapter = try makeAdapter(.opencode, profile: .opencode)
+        let info = try await adapter.open(SessionRequest())
+        XCTAssertEqual(info.session, "sess-new")
+        XCTAssertEqual(info.model, "opencode-go/hy3", "the session's own model, with none registered")
+        let launched = try XCTUnwrap(ACPFakeAgent.arguments(in: root))
+        XCTAssertEqual(launched["argv"] as? [String], ["acp"])
+        XCTAssertEqual(launched["socket"] as? String, "/tmp/sirius-test/ac.sock")
+        // opencode-login is a terminal method ("run `opencode auth login` in
+        // the terminal"): the server uses the credentials it already has, and
+        // Sirius never calls a method that could open one.
+        XCTAssertEqual(methods(), ["initialize", "session/new"])
+    }
+
+    func testOpenCodeResumesWithoutReplayAndCarriesItsInstructionsOnTheFirstPrompt() async throws {
+        try ACPFakeAgent.set(mode: "opencode", in: root)
+        adapter = try makeAdapter(.opencode, profile: .opencode)
+        let resumed = try await adapter.open(SessionRequest(resume: "sess-oc"))
+        XCTAssertEqual(resumed.session, "sess-oc")
+        XCTAssertFalse(methods().contains("session/load"), "resume replays no history")
+        let resume = try XCTUnwrap(request("session/resume"))
+        XCTAssertEqual(resume["sessionId"] as? String, "sess-oc")
+        XCTAssertEqual(resume["cwd"] as? String, root.path)
+        XCTAssertNil(resume["systemPrompt"], "OpenCode advertises no systemPrompt capability")
+
+        // With no systemPrompt to carry them, the instructions ride in front
+        // of the first prompt, then never again.
+        _ = try await adapter.prompt(message("hello"))
+        XCTAssertTrue(promptText()?.hasPrefix(ACPAdapter.instructionsHeader) == true)
+        _ = try await adapter.prompt(message("again"))
+        XCTAssertEqual(promptText(1), MessageRenderer.render(message("again")),
+                       "the instructions went once, on the first turn")
+    }
+
+    func testOpenCodeTakesTheRegisteredModelAndEffortThroughItsConfigOptions() async throws {
+        try ACPFakeAgent.set(mode: "opencode", in: root)
+        adapter = try makeAdapter(.opencode, profile: .opencode,
+                                  model: "anthropic/claude-sonnet-5-5", effort: "low")
+        let info = try await adapter.open(SessionRequest())
+        XCTAssertEqual(info.model, "anthropic/claude-sonnet-5-5")
+        XCTAssertEqual(info.effort, "low")
+        let sets = received().filter { $0["method"] as? String == "session/set_config_option" }
+            .compactMap { $0["params"] as? [String: Any] }
+        XCTAssertEqual(sets.map { $0["configId"] as? String }, ["model", "effort"])
+        XCTAssertEqual(sets.map { $0["value"] as? String }, ["anthropic/claude-sonnet-5-5", "low"])
+        XCTAssertEqual(sets.map { $0["sessionId"] as? String }, ["sess-new", "sess-new"])
+    }
+
+    func testAModelOpenCodeDoesNotOfferIsRefusedWithWhatItOffers() async throws {
+        try ACPFakeAgent.set(mode: "opencode", in: root)
+        adapter = try makeAdapter(.opencode, profile: .opencode, model: "anthropic/nonexistent")
+        do {
+            _ = try await adapter.open(SessionRequest())
+            XCTFail("open should throw")
+        } catch let error as ACPAdapterError {
+            XCTAssertEqual(error, .modelUnavailable(product: "OpenCode", "anthropic/nonexistent",
+                                                    available: ["opencode-go/hy3", "anthropic/claude-sonnet-5-5"]))
+            XCTAssertNotNil(error.userMessage)
+        }
+        let pid = await adapter.processIdentifier
+        XCTAssertNil(pid, "the server is not left running")
+    }
+
     func testAStoredSessionIsLoadedAndAGoneOneIsReplaced() async throws {
         let updates = adapter.updates
         let loaded = try await adapter.open(SessionRequest(resume: "sess-old"))
@@ -422,8 +489,9 @@ final class ACPAdapterTests: XCTestCase {
 
     // MARK: host
 
-    func testTheHostBuildsAnACPAdapterForBothHarnesses() {
-        for (harness, product) in [(AgentRegistration.Harness.cursor, "Cursor"), (.antigravity, "Antigravity")] {
+    func testTheHostBuildsAnACPAdapterForEveryACPHarness() {
+        for (harness, product) in [(AgentRegistration.Harness.cursor, "Cursor"), (.antigravity, "Antigravity"),
+                                   (.opencode, "OpenCode")] {
             let registration = AgentRegistration(agent: "a", name: "A", harness: harness, executable: "/x", root: "/r")
             let built = AgentHost.makeDefaultAdapter(AgentHost.AdapterContext(
                 registration: registration, socketPath: "/tmp/a.sock",

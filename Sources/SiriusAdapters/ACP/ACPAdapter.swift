@@ -3,11 +3,11 @@ import SiriusCore
 import SiriusProtocol
 
 // Any agent that speaks the Agent Client Protocol, version 1, over stdio
-// (agentclientprotocol.com): Cursor's `agent acp` and Antigravity's
-// `agy acp` today. What differs between them is an ACPProfile; nothing here
-// names a harness. One warm process per agent, one session, one turn per
-// Message. The agent reaches the user through sirius-mcp, given to the
-// session as the MCP server "sirius".
+// (agentclientprotocol.com): Cursor's `agent acp`, Antigravity's `agy acp`
+// and OpenCode's `opencode acp` today. What differs between them is an
+// ACPProfile; nothing here names a harness. One warm process per agent,
+// one session, one turn per Message. The agent reaches the user through
+// sirius-mcp, given to the session as the MCP server "sirius".
 //
 // open:   spawn the server in the root, initialize, authenticate with the
 //         profile's method when the server offers it, then session/resume

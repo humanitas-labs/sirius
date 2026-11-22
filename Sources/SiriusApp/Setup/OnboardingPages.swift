@@ -370,7 +370,7 @@ struct AgentMark: View {
     var ink: Color = .white
 
     static func inked(_ harness: AgentRegistration.Harness) -> Bool {
-        harness == .codex || harness == .cursor
+        harness == .codex || harness == .cursor || harness == .opencode
     }
 
     var body: some View {
@@ -392,6 +392,7 @@ struct AgentMark: View {
         case .museCode: "Muse"
         case .cursor: "Cursor"
         case .antigravity: "Gemini / Antigravity"
+        case .opencode: "OpenCode"
         }
     }
 }

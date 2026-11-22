@@ -4,10 +4,11 @@ import SiriusProtocol
 import XCTest
 @testable import SiriusAdapters
 
-// The real `agent acp` or `agy acp` against the running Sirius.app's dev
-// socket. Gated, one harness at a time:
+// The real `agent acp`, `agy acp` or `opencode acp` against the running
+// Sirius.app's dev socket. Gated, one harness at a time:
 //   SIRIUS_LIVE_ACP=cursor swift test --filter ACPLiveTests
 //   SIRIUS_LIVE_ACP=antigravity swift test --filter ACPLiveTests
+//   SIRIUS_LIVE_ACP=opencode swift test --filter ACPLiveTests
 // Shows two real toasts and spends two short turns on the signed-in
 // account. SIRIUS_LIVE_ACP_MODEL names the model; without it, the CLI's own.
 // Every JSON-RPC line is printed, so the first run against a new CLI
@@ -18,8 +19,9 @@ final class ACPLiveTests: XCTestCase {
         guard let name = environment["SIRIUS_LIVE_ACP"],
               let harness = AgentRegistration.Harness(rawValue: name),
               let profile = [AgentRegistration.Harness.cursor: ACPProfile.cursor,
-                             .antigravity: ACPProfile.antigravity][harness] else {
-            throw XCTSkip("set SIRIUS_LIVE_ACP=cursor or antigravity to run against the real CLI and Sirius.app")
+                             .antigravity: ACPProfile.antigravity,
+                             .opencode: ACPProfile.opencode][harness] else {
+            throw XCTSkip("set SIRIUS_LIVE_ACP=cursor, antigravity or opencode to run against the real CLI and Sirius.app")
         }
         let socket = Self.userTempDirectory() + "sirius/dev.sock"
         try XCTSkipUnless(FileManager.default.fileExists(atPath: socket), "Sirius.app is not serving \(socket)")
