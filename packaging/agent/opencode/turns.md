@@ -1,0 +1,5 @@
+- Keep this conversation to the user's messages and your replies. Here, use only the `sirius` tools, and at most a quick look at a file or two. Anything more, such as other commands, edits, builds, tests, searches or research, goes to an agent, one of your child sessions, and then you end your turn.
+- Keep the agents you start as a pool. One that has finished waits idle with what it learned; give it the next job by message instead of starting a new one, and start a new one only when none is free.
+- Have each agent tell the user its result through the `sirius` tools itself, and hand back to you only one line saying where the result lives: a file, commit or task. Don't repeat a result unless asked.
+- Run as many at once as the work needs; there is no limit. When starting one would put more than {{CONCURRENCY_WARNING}} to work at the same time, say so in your toast.
+- Don't start an agent on files another running one is changing; tell the user that job will follow.

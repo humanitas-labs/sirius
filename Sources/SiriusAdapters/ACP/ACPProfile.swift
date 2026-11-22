@@ -120,4 +120,31 @@ extension ACPProfile {
         authMethod: nil,
         arguments: { _ in ["acp"] },
         environment: ["AGY_CLI_DISABLE_AUTO_UPDATE": "true"])
+
+    // OpenCode: `opencode acp` (opencode.ai/docs/cli/acp), run against
+    // 2.3.2 on 2026.11.22: initialize reports protocol 1, image prompts and
+    // session/resume (no history replay), and one auth method,
+    // opencode-login, which is a terminal method ("run `opencode auth
+    // login` in the terminal"): never called, as the server uses the
+    // provider credentials it already has and answers a prompt that needs
+    // them with auth_required. The registered model and effort are session
+    // config options, "model" taking provider/model ids and "effort"
+    // (thought_level) offered only for models with variants; one that is
+    // not offered is left alone, as elsewhere. It advertises no system
+    // prompt capability, so instructions go in front of the first prompt.
+    // A session takes the MCP servers session/new names, accepts them
+    // without a prompt, and asks permission for each call of their tools,
+    // with allow_once, allow_always and reject options; it reports
+    // usage_update before the prompt response. session/resume must carry
+    // the session's own cwd (checked: another cwd answers "does not belong
+    // to cwd"), which the adapter's root always is. It exits when its
+    // stdin closes.
+    //
+    // initialize also says _meta.steering supported. Sirius sends one
+    // turn at a time regardless, as it does for the other ACP agents:
+    // a message sent while one runs waits for the next turn.
+    static let opencode = ACPProfile(
+        product: "OpenCode", command: "opencode", signIn: "opencode auth login",
+        authMethod: nil,
+        arguments: { _ in ["acp"] })
 }

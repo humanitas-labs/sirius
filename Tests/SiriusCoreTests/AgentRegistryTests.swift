@@ -222,6 +222,14 @@ final class AgentRegistryTests: XCTestCase {
         XCTAssertFalse(try registry.seedIcon(agent: "codex", harness: .codex, marks: marks))
         XCTAssertFalse(FileManager.default.fileExists(atPath: registryDirectory.appendingPathComponent("codex/icon.svg").path))
 
+        // A harness whose only default is a png seeds it as icon.png.
+        try Data([0x89, 0x50, 0x4E, 0x47]).write(to: marks.appendingPathComponent("opencode.png"))
+        try put("opencode", json: definition(agent: "opencode", harness: "opencode"))
+        XCTAssertTrue(try registry.seedIcon(agent: "opencode", harness: .opencode, marks: marks))
+        let seededPNG = registryDirectory.appendingPathComponent("opencode/icon.png")
+        XCTAssertEqual(try Data(contentsOf: seededPNG), Data([0x89, 0x50, 0x4E, 0x47]))
+        XCTAssertEqual(registry.icon(agent: "opencode"), seededPNG)
+
         // No default for the harness: nothing is written.
         let empty = registryDirectory.appendingPathComponent(".empty", isDirectory: true)
         try put("other", json: definition(agent: "other", harness: "codex"))
@@ -229,10 +237,17 @@ final class AgentRegistryTests: XCTestCase {
         XCTAssertNil(registry.icon(agent: "other"))
     }
 
-    func testDefaultIconIsNamedForTheHarness() {
+    func testDefaultIconPrefersTheSvgAndFallsBackToThePng() {
         let marks = URL(fileURLWithPath: "/marks", isDirectory: true)
-        XCTAssertEqual(AgentRegistry.defaultIcon(harness: .claudeCode, marks: marks).path, "/marks/claude-code.svg")
-        XCTAssertEqual(AgentRegistry.defaultIcon(harness: .codex, marks: marks).path, "/marks/codex.svg")
+        XCTAssertEqual(AgentRegistry.defaultIcon(harness: .claudeCode, marks: marks).path, "/marks/claude-code.png")
+        let both = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try? FileManager.default.createDirectory(at: both, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: both) }
+        try? Data("<svg/>".utf8).write(to: both.appendingPathComponent("claude-code.svg"))
+        XCTAssertEqual(AgentRegistry.defaultIcon(harness: .claudeCode, marks: both).path,
+                       (both as NSURL).appendingPathComponent("claude-code.svg")!.path)
+        XCTAssertEqual(AgentRegistry.defaultIcon(harness: .opencode, marks: both).path,
+                       (both as NSURL).appendingPathComponent("opencode.png")!.path)
     }
 
     // packaging/marks has a default mark for every harness.

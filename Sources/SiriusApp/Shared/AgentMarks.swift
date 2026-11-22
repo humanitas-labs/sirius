@@ -64,16 +64,25 @@ enum AgentMarks {
         return FileManager.default.fileExists(atPath: url.path) ? url : own
     }
 
-    // Whether an agent's icon.svg is a copy onboarding seeded from an
-    // earlier default mark, untouched since: those carry the comment naming
-    // their simple-icons source. Such a copy gives way to the current
+    // Whether an agent's icon is a copy onboarding seeded from an earlier
+    // default mark, untouched since. Such a copy gives way to the current
     // default, so a mark fixed in the app (Gemini's gradient, Meta's for
-    // Muse) reaches agents set up before the fix. A logo the person put
-    // there has no such comment and is kept.
+    // Muse, OpenCode's favicon-informed mark) reaches agents set up before
+    // the fix. A logo the person put there is not one and is kept. An svg
+    // copy carries the comment naming its simple-icons source; a png copy
+    // (OpenCode's) carries the tEXt marker the shipped file embeds, so a
+    // fixed default retires every seeded copy of any version of it.
     static func isSeededCopy(_ url: URL) -> Bool {
-        guard url.pathExtension == "svg", let data = try? Data(contentsOf: url), data.count < 64_000,
-              let text = String(data: data, encoding: .utf8) else { return false }
-        return text.contains("<!-- simple-icons ")
+        guard let data = try? Data(contentsOf: url), data.count < 64_000 else { return false }
+        switch url.pathExtension {
+        case "svg":
+            guard let text = String(data: data, encoding: .utf8) else { return false }
+            return text.contains("<!-- simple-icons ")
+        case "png":
+            return data.range(of: Data("Sirius seeded default mark".utf8)) != nil
+        default:
+            return false
+        }
     }
 
     // The mark drawn once by AppKit into a bitmap at 128 pixels a side.

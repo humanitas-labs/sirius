@@ -1,7 +1,7 @@
 import Foundation
 
-// A stand-in for an ACP agent (`agent acp`, `agy acp`): the ACP v1 subset
-// the adapter uses. It logs its argv and environment to fake-acp.args and
+// A stand-in for an ACP agent (`agent acp`, `agy acp`, `opencode acp`): the
+// ACP v1 subset the adapter uses. It logs its argv and environment to fake-acp.args and
 // every line it receives to fake-acp.log, both in its working directory
 // (the agent's root). Like Cursor's server it stays up after its stdin
 // closes. The turn's text picks the behaviour: FAKE_REFUSE ends it with
@@ -14,10 +14,13 @@ import Foundation
 //
 // fake-acp.mode beside the script changes the server: "full" advertises
 // session/resume and systemPrompt and offers model and thinking-level
-// config options, as Antigravity's docs describe; "signedout" refuses
-// sessions as signed out; "silent" never answers authenticate and refuses
-// sessions; "exit" writes to stderr and exits 1 at initialize; "v2"
-// answers initialize with protocol version 2.
+// config options, as Antigravity's docs describe; "opencode" is OpenCode
+// as run against 2.3.2: session/resume without replay, config options
+// model and effort, no systemPrompt (so instructions go in front of the
+// first prompt) and one terminal auth method Sirius must not send;
+// "signedout" refuses sessions as signed out; "silent" never answers
+// authenticate and refuses sessions; "exit" writes to stderr and exits 1
+// at initialize; "v2" answers initialize with protocol version 2.
 enum ACPFakeAgent {
     static let script = #"""
     #!/usr/bin/env python3
@@ -46,6 +49,7 @@ enum ACPFakeAgent {
         send({"method": "session/update", "params": {"sessionId": sid, "update": body}})
 
     model, level = "gemini-4-carbon-medium", "medium"
+    oc_model, oc_effort = "opencode-go/hy3", "low"
     def options():
         return [
             {"id": "model", "name": "Model", "category": "model", "type": "select", "currentValue": model,
@@ -56,6 +60,17 @@ enum ACPFakeAgent {
              "currentValue": level,
              "options": [{"value": "lo", "name": "Low"}, {"value": "medium", "name": "Medium"},
                          {"value": "extra", "name": "Extra"}]},
+        ]
+
+    def oc_options():
+        return [
+            {"id": "model", "name": "Model", "category": "model", "type": "select", "currentValue": oc_model,
+             "options": [{"value": "anthropic/claude-sonnet-5-5", "name": "Claude Sonnet 5.5"},
+                         {"value": "opencode-go/hy3", "name": "HY3"}]},
+            {"id": "effort", "name": "Effort", "category": "thought_level", "type": "select",
+             "currentValue": oc_effort,
+             "options": [{"value": "default", "name": "Default"}, {"value": "low", "name": "Low"},
+                         {"value": "medium", "name": "Medium"}, {"value": "high", "name": "High"}]},
         ]
 
     SIGNED_OUT = {"code": -32000, "message": "Authentication required"}
@@ -85,6 +100,16 @@ enum ACPFakeAgent {
                     "mcpCapabilities": {"http": True, "sse": True}, "sessionCapabilities": {"list": {}}}
             if mode == "full":
                 caps["sessionCapabilities"] = {"list": {}, "resume": {}, "systemPrompt": {}}
+            if mode == "opencode":
+                # OpenCode as checked on 2.3.2: resume without replay, image
+                # prompts, config options, no systemPrompt capability, and a
+                # single terminal auth method the client must not send.
+                caps = {"loadSession": True, "promptCapabilities": {"image": True, "audio": False},
+                        "mcpCapabilities": {"http": True, "sse": False},
+                        "sessionCapabilities": {"list": {}, "resume": {}}}
+                send({"id": mid, "result": {"protocolVersion": 1, "agentCapabilities": caps,
+                                            "authMethods": [{"id": "opencode-login", "name": "Login with opencode"}]}})
+                continue
             send({"id": mid, "result": {"protocolVersion": 2 if mode == "v2" else 1, "agentCapabilities": caps,
                                         "authMethods": [{"id": "fake_login", "name": "Fake login"},
                                                         {"id": "browser", "name": "Opens a browser"}]}})
@@ -98,6 +123,7 @@ enum ACPFakeAgent {
                 continue
             result = {"sessionId": "sess-new"}
             if mode == "full": result["configOptions"] = options()
+            if mode == "opencode": result["configOptions"] = oc_options()
             send({"id": mid, "result": result})
         elif method in ("session/load", "session/resume"):
             sid = params.get("sessionId")
@@ -109,11 +135,14 @@ enum ACPFakeAgent {
                 update(sid, {"sessionUpdate": "usage_update", "used": 999, "size": 200000})
             result = {}
             if mode == "full": result["configOptions"] = options()
+            if mode == "opencode": result["configOptions"] = oc_options()
             send({"id": mid, "result": result})
         elif method == "session/set_config_option":
             if params.get("configId") == "model": model = params.get("value")
             if params.get("configId") == "thinking": level = params.get("value")
-            send({"id": mid, "result": {"configOptions": options()}})
+            if params.get("configId") == "model" and mode == "opencode": oc_model = params.get("value")
+            if params.get("configId") == "effort": oc_effort = params.get("value")
+            send({"id": mid, "result": {"configOptions": oc_options() if mode == "opencode" else options()}})
         elif method == "session/prompt":
             turns += 1
             sid = params["sessionId"]

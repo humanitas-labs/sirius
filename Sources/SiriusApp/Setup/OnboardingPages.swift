@@ -370,6 +370,9 @@ struct AgentMark: View {
     var ink: Color = .white
 
     static func inked(_ harness: AgentRegistration.Harness) -> Bool {
+        // OpenCode's mark carries its own second tone (the favicon's dimmed
+        // square), so it renders in its own colours; the flat one-tone
+        // marks render as the ink.
         harness == .codex || harness == .cursor
     }
 
@@ -392,6 +395,7 @@ struct AgentMark: View {
         case .museCode: "Muse"
         case .cursor: "Cursor"
         case .antigravity: "Gemini / Antigravity"
+        case .opencode: "OpenCode"
         }
     }
 }

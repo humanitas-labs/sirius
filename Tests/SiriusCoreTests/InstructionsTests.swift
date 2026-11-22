@@ -1,4 +1,5 @@
 import Foundation
+import SiriusProtocol
 import XCTest
 @testable import SiriusCore
 
@@ -144,6 +145,20 @@ final class InstructionsTests: XCTestCase {
         XCTAssertTrue(template.contains("@~/.agents/toasts.md"))
         XCTAssertFalse(template.contains("Keep toasts"))
         XCTAssertEqual(Instructions.shared, ["toasts.md"])
+    }
+
+    // A harness's template folder holds the parts instructions.md fills from
+    // it: {{tools}} and, through staying.md, {{turns}}.
+    func testEveryHarnessShipsItsTemplateParts() throws {
+        let agent = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .appendingPathComponent("packaging/agent", isDirectory: true)
+        for harness in AgentRegistration.Harness.allCases {
+            for part in ["tools.md", "turns.md"] {
+                let url = agent.appendingPathComponent(harness.rawValue, isDirectory: true).appendingPathComponent(part)
+                XCTAssertTrue(FileManager.default.fileExists(atPath: url.path), url.path)
+            }
+        }
     }
 
     func testNoWorkersMdWithoutAWorkersFolder() throws {

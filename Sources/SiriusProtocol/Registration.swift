@@ -48,10 +48,11 @@ public struct AgentRegistration: Equatable, Sendable, Codable {
         // In the order Settings and onboarding list them.
         case claudeCode = "claude-code"
         case codex
-        // Cursor's CLI and Google's Antigravity CLI, both over ACP.
+        // Cursor's CLI, Google's Antigravity CLI and OpenCode, all over ACP.
         case cursor
         case antigravity
         case museCode = "muse-code"
+        case opencode
     }
 
     public init(agent: String, name: String, harness: Harness, executable: String, root: String,

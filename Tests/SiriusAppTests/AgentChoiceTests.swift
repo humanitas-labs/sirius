@@ -171,6 +171,23 @@ final class AgentChoiceSettingsTests: XCTestCase {
         try Data("<svg><path d=\"M0 0h24v24H0z\"/></svg>".utf8).write(to: own)
         XCTAssertTrue(AgentMarks.isSeededCopy(seeded))
         XCTAssertFalse(AgentMarks.isSeededCopy(own))
+
+        // A png copy is seeded when it carries the marker the shipped file
+        // embeds — so a fixed default retires a copy seeded from any earlier
+        // version of it, not just its own bytes; one drawn by hand, even
+        // from the same default, is the person's own.
+        let marks = AgentMarks.directory
+        guard let defaultPNG = try? Data(contentsOf: marks.appendingPathComponent("opencode.png")) else {
+            return XCTFail("packaging/marks/opencode.png is missing")
+        }
+        XCTAssertTrue(defaultPNG.range(of: Data("Sirius seeded default mark".utf8)) != nil,
+                      "the shipped png carries the marker")
+        let copied = folder.appendingPathComponent("copied.png")
+        try defaultPNG.write(to: copied)
+        let drawn = folder.appendingPathComponent("drawn.png")
+        try Data([0x89, 0x50, 0x4E, 0x47]).write(to: drawn)
+        XCTAssertTrue(AgentMarks.isSeededCopy(copied))
+        XCTAssertFalse(AgentMarks.isSeededCopy(drawn))
     }
 
     func testCursorTakesNoEffortAndTheOthersDo() {
