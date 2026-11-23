@@ -15,6 +15,14 @@ We believe the future is multi-agent, so Sirius is bring your own harness (BYOH)
 
 [Download Sirius](https://trysirius.app/download) for macOS 14+ on Apple Silicon.
 
+Or install it with Homebrew:
+
+```sh
+brew tap humanitas-labs/tap
+brew trust humanitas-labs/tap
+brew install --cask sirius
+```
+
 ## 1. Usage
 
 | Shortcut | What it does |
