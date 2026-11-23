@@ -19,7 +19,7 @@ public struct Wmem {
           wmem hit NAME...              log that an entry resolved a reference
           wmem window [DAYS]            show or set the cleanup window
           wmem cleaned                  stamp today as the last cleanup
-        Files: $WMEM_FILE (default ~/.agents/WMEM.md) and wmem.log beside it, one tab-separated event per line.
+        Files: $WMEM_FILE (default ~/.agents/sirius/WMEM.md) and wmem.log beside it, one tab-separated event per line.
         """
     public static let commands = ["ls", "add", "rm", "hit", "window", "cleaned"]
 
@@ -41,11 +41,11 @@ public struct Wmem {
         self.err = err
     }
 
-    // $WMEM_FILE with ~ expanded, else ~/.agents/WMEM.md; ~ is $HOME.
+    // $WMEM_FILE with ~ expanded, else ~/.agents/sirius/WMEM.md; ~ is $HOME.
     public static func file(environment: [String: String]) -> URL {
         let home = environment["HOME"].flatMap { $0.isEmpty ? nil : $0 } ?? NSHomeDirectory()
         guard let path = environment["WMEM_FILE"], !path.isEmpty else {
-            return URL(fileURLWithPath: home).appendingPathComponent(".agents").appendingPathComponent("WMEM.md")
+            return URL(fileURLWithPath: home).appendingPathComponent(".agents/sirius").appendingPathComponent("WMEM.md")
         }
         if path == "~" { return URL(fileURLWithPath: home) }
         if path.hasPrefix("~/") { return URL(fileURLWithPath: home + String(path.dropFirst(1))) }

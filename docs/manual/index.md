@@ -149,7 +149,7 @@ An agent you have installed but never used in Sirius appears in the list too. Ch
 
 Beside it, `consts.md` holds the numbers the instructions use, and `agent.json` holds the settings above.
 
-**Working memory.** Agents share a short file of pointers to the things you refer to, at `~/.agents/WMEM.md`, so "the report from yesterday" means something tomorrow. Agents read it at the start of each session and add a one-line pointer whenever they had to search or ask to find something; they edit the file directly, with no extra tool. Sirius creates it the first time it runs if it is missing. You can read or edit it, and pin entries you want kept.
+**Working memory.** Agents share a short file of pointers to the things you refer to, at `~/.agents/sirius/WMEM.md`, so "the report from yesterday" means something tomorrow. Agents read it at the start of each session and add a one-line pointer whenever they had to search or ask to find something; they edit the file directly, with no extra tool. Sirius creates it the first time it runs if it is missing. You can read or edit it, and pin entries you want kept.
 
 **Your agent keeps its own setup.** It runs with the settings, tools and permissions its program already has. Sirius adds only the way for it to reach you.
 
@@ -184,7 +184,7 @@ Where Sirius keeps things:
 | Path | What |
 |---|---|
 | `~/.agents/registry/<agent>/` | Each agent's settings and instructions |
-| `~/.agents/WMEM.md` | Working memory, created on first run if missing |
+| `~/.agents/sirius/WMEM.md` | Working memory, created on first run if missing |
 | `~/Library/Application Support/Sirius/agents/<agent>/` | Each agent's message log and attachments |
 | `~/Library/Application Support/Sirius/agents/manual/` | This manual |
 | `~/Library/Logs/Sirius/sirius.log` | What Sirius did, for troubleshooting. It does not record what you said. At most 5 MB, with one older copy. |

@@ -451,12 +451,20 @@ final class AgentHostTests: XCTestCase {
 // MARK: - Working memory
 
 extension AgentHostTests {
-    // WMEM.md beside the registry folder, as ~/.agents/WMEM.md is.
-    private var memory: URL { URL(fileURLWithPath: base).appendingPathComponent(WorkingMemory.file) }
+    // The sirius folder beside the registry folder, as ~/.agents/sirius is.
+    private var folder: URL { URL(fileURLWithPath: base).appendingPathComponent(SiriusFolder.name) }
+    private var memory: URL { folder.appendingPathComponent(WorkingMemory.file) }
+
+    private func writeShared(_ text: String, _ name: String) throws -> URL {
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let url = folder.appendingPathComponent(name)
+        try text.write(to: url, atomically: true, encoding: .utf8)
+        return url
+    }
 
     // An agent whose instructions include the test's WMEM.md, with a limit.
     private func registerKeeper(_ agent: String, limit: Int = 30) throws {
-        try register(agent, instructions: "Mine. @../../WMEM.md")
+        try register(agent, instructions: "Mine. @../../sirius/WMEM.md")
         try "WMEM_TOKEN_LIMIT: \(limit)\n".write(
             to: registryDirectory.appendingPathComponent(agent).appendingPathComponent(Instructions.consts),
             atomically: true, encoding: .utf8)
@@ -465,15 +473,14 @@ extension AgentHostTests {
     private func writeMemory(tokens: Int, cleaned: String = "never") throws {
         let header = "# Working memory\n\nWindow: 14 days · Cleaned: \(cleaned)\n\n## Learned\n\n"
         let entry = "- e: " + String(repeating: "x", count: max(0, tokens * 4 - header.count - 6)) + "\n"
-        try (header + entry).write(to: memory, atomically: true, encoding: .utf8)
+        _ = try writeShared(header + entry, WorkingMemory.file)
     }
 
     private func sirius(_ adapter: HostFakeAdapter) -> [Message] { adapter.messages.filter(\.fromSirius) }
 
     func testStartSeedsWorkingMemoryBesideTheRegistryAndKeepsTheUsers() async throws {
         try register("alpha")
-        let gc = URL(fileURLWithPath: base).appendingPathComponent(WorkingMemory.cleanup)
-        try "mine".write(to: gc, atomically: true, encoding: .utf8)
+        let gc = try writeShared("mine", WorkingMemory.cleanup)
         let host = makeHost()
         await host.start()
         let seeded = try String(contentsOf: memory, encoding: .utf8)
@@ -483,12 +490,27 @@ extension AgentHostTests {
         await host.stopAll()
     }
 
+    // Files from when they were directly beside the registry are moved into
+    // the sirius folder, not seeded again beside them.
+    func testStartMovesFilesLeftBesideTheRegistryIntoTheSiriusFolder() async throws {
+        try register("alpha")
+        let old = URL(fileURLWithPath: base)
+        try "kept".write(to: old.appendingPathComponent(WorkingMemory.file), atomically: true, encoding: .utf8)
+        try "log".write(to: old.appendingPathComponent("wmem.log"), atomically: true, encoding: .utf8)
+        let host = makeHost()
+        await host.start()
+        XCTAssertEqual(try String(contentsOf: memory, encoding: .utf8), "kept")
+        XCTAssertEqual(try String(contentsOf: folder.appendingPathComponent("wmem.log"), encoding: .utf8), "log")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: old.appendingPathComponent(WorkingMemory.file).path))
+        XCTAssertFalse(FileManager.default.fileExists(atPath: old.appendingPathComponent("wmem.log").path))
+        await host.stopAll()
+    }
+
     // The shared toast rule is the app's: written beside the registry, put
     // back over a stale copy, and in the instructions the agent starts with.
     func testStartRefreshesTheSharedToastRuleAndTheAgentIsGivenIt() async throws {
-        try register("alpha", instructions: "Mine. @../../toasts.md")
-        let rule = URL(fileURLWithPath: base).appendingPathComponent("toasts.md")
-        try "Stale rule.".write(to: rule, atomically: true, encoding: .utf8)
+        try register("alpha", instructions: "Mine. @../../sirius/toasts.md")
+        let rule = try writeShared("Stale rule.", "toasts.md")
         let host = makeHost()
         await host.start()
         let shipped = try String(contentsOf: InstructionsTemplates.directory.appendingPathComponent("toasts.md"),

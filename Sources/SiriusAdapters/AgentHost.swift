@@ -126,9 +126,12 @@ public actor AgentHost {
         bundle.bundleURL.appendingPathComponent("Contents/Resources/agent", isDirectory: true)
     }
 
-    // ~/.agents, the registry folder's parent: WMEM.md, gc.md and the shared
-    // rules (toasts.md) live here.
+    // ~/.agents, the registry folder's parent, which other tools share.
     var agentsDirectory: URL { registry.directory.deletingLastPathComponent() }
+
+    // ~/.agents/sirius: WMEM.md, gc.md and the shared rules (toasts.md)
+    // live here.
+    var siriusDirectory: URL { SiriusFolder.directory(agents: agentsDirectory) }
 
     // The registry, after seeding the instructions of any agent without them,
     // and, once there is an agent, working memory and the shared rules the
@@ -138,13 +141,22 @@ public actor AgentHost {
         let scan = registry.loadAll()
         var wrote = false
         if !scan.agents.isEmpty {
+            // Before the seeding, so a file that was directly in ~/.agents
+            // is moved, not seeded again beside it.
             do {
-                if try WorkingMemory.seed(into: agentsDirectory, templates: templatesDirectory) { wrote = true }
+                if try SiriusFolder.migrate(agents: agentsDirectory, agentFolders: scan.agents.map(\.directory)) {
+                    wrote = true
+                }
+            } catch {
+                report("Sirius: couldn't move its files into \(siriusDirectory.path): \(error)")
+            }
+            do {
+                if try WorkingMemory.seed(into: siriusDirectory, templates: templatesDirectory) { wrote = true }
             } catch {
                 report("Sirius: couldn't write working memory's templates: \(error)")
             }
             do {
-                if try Instructions.refreshShared(into: agentsDirectory, templates: templatesDirectory) {
+                if try Instructions.refreshShared(into: siriusDirectory, templates: templatesDirectory) {
                     wrote = true
                 }
             } catch {
@@ -384,7 +396,7 @@ public actor AgentHost {
 
     private func watchWorkingMemory() {
         guard memoryWatcher == nil else { return }
-        let watcher = FileWatcher(file: agentsDirectory.appendingPathComponent(WorkingMemory.file)) { [weak self] in
+        let watcher = FileWatcher(file: siriusDirectory.appendingPathComponent(WorkingMemory.file)) { [weak self] in
             Task { await self?.checkWorkingMemory() }
         }
         watcher.start()
@@ -397,7 +409,7 @@ public actor AgentHost {
     @discardableResult
     func checkWorkingMemory() async -> String? {
         guard !stopped else { return nil }
-        let memory = agentsDirectory.appendingPathComponent(WorkingMemory.file)
+        let memory = siriusDirectory.appendingPathComponent(WorkingMemory.file)
         let text = (try? String(contentsOf: memory, encoding: .utf8)) ?? ""
         guard let id = order.first(where: { id in
             hosted[id].map { WorkingMemory.isIncluded(memory, agentFolder: $0.entry.directory) } ?? false
@@ -407,7 +419,7 @@ public actor AgentHost {
         guard memoryTrigger.shouldAsk(tokens: tokens, limit: limit, cleaned: WorkingMemory.cleaned(text)) else {
             return nil
         }
-        guard let cleanup = WorkingMemory.cleanupText(agentFolder: agent.entry.directory, agents: agentsDirectory,
+        guard let cleanup = WorkingMemory.cleanupText(agentFolder: agent.entry.directory, agents: siriusDirectory,
                                                       templates: templatesDirectory) else {
             report("Sirius: \(id): working memory is over its limit, but there is no \(WorkingMemory.cleanup) to send")
             return nil

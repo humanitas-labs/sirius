@@ -20,12 +20,12 @@ import Foundation
 // stays as written. consts.md is seeded like instructions.md, on its own.
 //
 // A rule that must read the same for every agent is not in the seeded text,
-// where each agent's copy would go stale: it is in a file in ~/.agents
+// where each agent's copy would go stale: it is in a file in ~/.agents/sirius
 // beside the registry folder that the template includes with @ (toasts.md).
 // That file is the app's, not the user's: refreshShared rewrites it from
 // the app's template whenever the two differ.
 public enum Instructions {
-    // The files in ~/.agents the app owns and keeps equal to its templates.
+    // The files in ~/.agents/sirius the app owns and keeps equal to its templates.
     public static let shared = ["toasts.md"]
 
     public static let entrypoint = "instructions.md"
@@ -192,7 +192,7 @@ public enum Instructions {
         return wrote
     }
 
-    // Makes each shared file in `folder` (~/.agents) equal to the template of
+    // Makes each shared file in `folder` (~/.agents/sirius) equal to the template of
     // the same name in `templates`, writing only when it is missing or
     // differs. Unlike seed, it overwrites: these files are the app's, so an
     // update's wording reaches every agent. A template that can't be read

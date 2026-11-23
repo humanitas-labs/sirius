@@ -1,9 +1,9 @@
 import Foundation
 import SiriusMemory
 
-// Working memory: WMEM.md in ~/.agents, the parent of the registry folder,
+// Working memory: WMEM.md in ~/.agents/sirius, beside the registry folder,
 // a short list of pointers to what the user refers to, which an agent's
-// instructions include with @~/.agents/WMEM.md. The agents keep it with the
+// instructions include with @~/.agents/sirius/WMEM.md. The agents keep it with the
 // wmem helper (target wmem, in Sirius.app/Contents/Helpers) and
 // clean it up as gc.md says: a prompt, not a script. gc.md beside WMEM.md
 // is shared by every agent; an agent's own registry/<agent>/gc.md takes its

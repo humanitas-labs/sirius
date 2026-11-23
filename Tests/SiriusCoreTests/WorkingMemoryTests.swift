@@ -61,7 +61,7 @@ final class WorkingMemoryTests: XCTestCase {
         XCTAssertFalse(cleanup.contains("wmem "))
         XCTAssertFalse((memory + cleanup).contains("Andrew"))
         let instructions = try String(contentsOf: agent.appendingPathComponent("instructions.md"), encoding: .utf8)
-        XCTAssertTrue(instructions.contains("@~/.agents/WMEM.md"))
+        XCTAssertTrue(instructions.contains("@~/.agents/sirius/WMEM.md"))
         XCTAssertFalse(instructions.contains("`wmem`"))
         let consts = try String(contentsOf: agent.appendingPathComponent("consts.md"), encoding: .utf8)
         XCTAssertEqual(Instructions.parseConsts(consts)[WorkingMemory.limitName], "2000")

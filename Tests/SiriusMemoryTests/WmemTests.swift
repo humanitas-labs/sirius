@@ -217,8 +217,8 @@ final class WmemTests: XCTestCase {
     }
 
     func testFileComesFromTheEnvironment() {
-        XCTAssertEqual(Wmem.file(environment: ["HOME": "/h"]).path, "/h/.agents/WMEM.md")
-        XCTAssertEqual(Wmem.file(environment: ["HOME": "/h", "WMEM_FILE": ""]).path, "/h/.agents/WMEM.md")
+        XCTAssertEqual(Wmem.file(environment: ["HOME": "/h"]).path, "/h/.agents/sirius/WMEM.md")
+        XCTAssertEqual(Wmem.file(environment: ["HOME": "/h", "WMEM_FILE": ""]).path, "/h/.agents/sirius/WMEM.md")
         XCTAssertEqual(Wmem.file(environment: ["HOME": "/h", "WMEM_FILE": "~/m/W.md"]).path, "/h/m/W.md")
         XCTAssertEqual(Wmem.file(environment: ["WMEM_FILE": "/x/W.md"]).path, "/x/W.md")
     }

@@ -141,7 +141,7 @@ final class InstructionsTests: XCTestCase {
         let rule = try String(contentsOf: agent.appendingPathComponent("toasts.md"), encoding: .utf8)
         XCTAssertTrue(rule.contains("under 140 characters"))
         let template = try String(contentsOf: agent.appendingPathComponent("instructions.md"), encoding: .utf8)
-        XCTAssertTrue(template.contains("@~/.agents/toasts.md"))
+        XCTAssertTrue(template.contains("@~/.agents/sirius/toasts.md"))
         XCTAssertFalse(template.contains("Keep toasts"))
         XCTAssertEqual(Instructions.shared, ["toasts.md"])
     }
