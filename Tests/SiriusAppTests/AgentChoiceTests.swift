@@ -112,7 +112,7 @@ final class AgentChoiceSettingsTests: XCTestCase {
         XCTAssertEqual(registered(.claudeCode).modelOptions, claude)
         XCTAssertEqual(registered(.claudeCode, model: "claude-opus-5-5").modelOptions, claude)
         XCTAssertEqual(registered(.claudeCode, model: "my-own-model").modelOptions, claude + ["my-own-model"])
-        XCTAssertEqual(registered(.codex).modelOptions.count, 6)
+        XCTAssertEqual(registered(.codex).modelOptions.count, 7)
         XCTAssertEqual(registered(.museCode).modelOptions, [nil])
         XCTAssertEqual(registered(.museCode, model: "muse-x").modelOptions, [nil, "muse-x"])
     }
@@ -123,6 +123,7 @@ final class AgentChoiceSettingsTests: XCTestCase {
         XCTAssertEqual(claude.modelLabel("claude-fable-5-2"), "Fable 5.2")
         XCTAssertEqual(claude.modelLabel("my-own-model"), "my-own-model")
         XCTAssertEqual(registered(.codex).modelLabel("gpt-6.1-sol"), "GPT-6.1 Sol")
+        XCTAssertEqual(registered(.codex).modelLabel("gpt-6.1-terra"), "GPT-6.1 Terra")
         // Another harness's id is not this one's model.
         XCTAssertEqual(registered(.codex).modelLabel("claude-opus-5-5"), "claude-opus-5-5")
     }

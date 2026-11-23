@@ -303,8 +303,9 @@ extension AgentChoice {
     // makers give them. A convenience, not a limit: agent.json takes any
     // id, and one that is not here still shows in the menu. Checked
     // 2026.11.18: Claude's ids are Anthropic's current ones; Codex's are
-    // the slugs in codex-cli 0.159.1's own list, and gpt-6.2-astra from a
-    // working config. Cursor's are the names a signed-in `agent acp`
+    // the GPT-6 slugs in codex-cli 0.159.1's own list (`codex debug
+    // models`, read again 2026.11.23 for gpt-6.1-terra), and gpt-6.2-astra
+    // from a working config. Cursor's are the names a signed-in `agent acp`
     // session (2026.08.11) offers, the main ones of each maker out of its
     // fifty; Antigravity's are the four a free account's `agy acp` session
     // (1.5.11) offers, so the Gemini 4 models of a paid plan are not here.
@@ -320,6 +321,7 @@ extension AgentChoice {
         case .codex: [
             Model("gpt-6.2-astra", "GPT-6.2 Astra"),
             Model("gpt-6.1-sol", "GPT-6.1 Sol"),
+            Model("gpt-6.1-terra", "GPT-6.1 Terra"),
             Model("gpt-6-astra", "GPT-6 Astra"),
             Model("gpt-6-sol", "GPT-6 Sol"),
             Model("gpt-6-luna", "GPT-6 Luna"),
