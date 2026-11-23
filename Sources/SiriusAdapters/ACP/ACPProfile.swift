@@ -21,6 +21,9 @@ struct ACPProfile: Sendable {
     var arguments: @Sendable (AgentRegistration) -> [String]
     // Added to the child's environment.
     var environment: [String: String] = [:]
+    // Run before each start, with the adapter's environment: readies what
+    // the server needs on disk and returns more environment for it.
+    var prepare: @Sendable (AgentRegistration, [String: String]) throws -> [String: String] = { _, _ in [:] }
     // The harness's own requests (not ACP's), or nil for one it has none for.
     var answer: @Sendable (_ method: String, _ params: JSONValue) -> JSONRPCStdio.Reply? = { _, _ in nil }
 
@@ -61,8 +64,9 @@ extension ACPProfile {
     // registered bare name matches the option of that name. Not --model:
     // that flag works before `acp`, but it also rewrites the user's own
     // default model in ~/.cursor/cli-config.json (seen on 2026.11.18), and
-    // an agent's model is not the user's default. Whether setting the
-    // config option leaves that file alone is not yet checked.
+    // an agent's model is not the user's default. Setting the config
+    // option rewrites it too (checked 2026.11.23), so the server runs on
+    // the agent's own config directory: see CursorConfig.
     //
     // The root flags go before `acp`, as the docs show for --api-key:
     // - --trust: the agent's root, without the prompt nobody would answer.
@@ -73,6 +77,10 @@ extension ACPProfile {
         product: "Cursor", command: "agent", otherCommands: ["cursor-agent"], signIn: "agent login",
         authMethod: "cursor_login",
         arguments: { _ in ["--trust", "--approve-mcps", "acp"] },
+        prepare: { registration, environment in
+            try CursorConfig.isolate(user: CursorConfig.userDirectory(environment: environment),
+                                     own: CursorConfig.agentDirectory(agent: registration.agent))
+        },
         answer: cursorAnswer)
 
     // Cursor's blocking requests (docs: "Your client must reply"), each

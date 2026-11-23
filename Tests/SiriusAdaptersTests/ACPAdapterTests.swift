@@ -15,6 +15,8 @@ final class ACPAdapterTests: XCTestCase {
     static let profile: ACPProfile = {
         var profile = ACPProfile.cursor
         profile.authMethod = "fake_login"
+        // The real one works on the user's ~/.cursor and Application Support.
+        profile.prepare = { _, _ in [:] }
         return profile
     }()
 
@@ -94,7 +96,7 @@ final class ACPAdapterTests: XCTestCase {
     }
 
     func testAMethodTheServerDoesNotOfferIsNeverCalled() async throws {
-        var profile = ACPProfile.cursor
+        var profile = ACPAdapterTests.profile
         profile.authMethod = "cursor_login"
         adapter = try makeAdapter(profile: profile)
         _ = try await adapter.open(SessionRequest())
@@ -120,6 +122,20 @@ final class ACPAdapterTests: XCTestCase {
         XCTAssertEqual(launched["argv"] as? [String], ["acp"])
         XCTAssertEqual(launched["noUpdate"] as? String, "true")
         XCTAssertEqual(methods(), ["initialize", "session/new"], "no auth method that could open a browser")
+    }
+
+    func testWhatTheProfilePreparesReachesTheServerAndAFailureDoesNotStopIt() async throws {
+        var profile = ACPAdapterTests.profile
+        profile.prepare = { registration, _ in ["CURSOR_CONFIG_DIR": "/own/\(registration.agent)"] }
+        adapter = try makeAdapter(profile: profile)
+        _ = try await adapter.open(SessionRequest())
+        XCTAssertEqual(try XCTUnwrap(ACPFakeAgent.arguments(in: root))["configDir"] as? String, "/own/ac")
+        await adapter.close()
+
+        profile.prepare = { _, _ in throw CocoaError(.fileWriteNoPermission) }
+        adapter = try makeAdapter(profile: profile)
+        _ = try await adapter.open(SessionRequest())
+        XCTAssertNil(try XCTUnwrap(ACPFakeAgent.arguments(in: root))["configDir"] as? String)
     }
 
     func testAStoredSessionIsLoadedAndAGoneOneIsReplaced() async throws {

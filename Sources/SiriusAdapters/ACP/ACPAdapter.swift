@@ -84,10 +84,16 @@ public actor ACPAdapter: Adapter {
         await close()
         guard let executable = profile.findExecutable(registered: registration.executable, environment: environment)
         else { throw ACPAdapterError.notFound(product: profile.product, command: profile.command) }
+        // What the profile readies on disk is a refinement: a server that
+        // starts without it still works.
+        var childEnvironment = profile.environment(environment, socketPath: socketPath, helpers: helpersDirectory)
+        for (name, value) in (try? profile.prepare(registration, environment)) ?? [:] {
+            childEnvironment[name] = value
+        }
         let connection = JSONRPCStdio(
             name: "\(profile.command) acp", executable: URL(fileURLWithPath: executable),
             arguments: profile.arguments(registration),
-            environment: profile.environment(environment, socketPath: socketPath, helpers: helpersDirectory),
+            environment: childEnvironment,
             directory: URL(fileURLWithPath: registration.root, isDirectory: true))
         let followed = FollowedSession()
         var handlers = JSONRPCStdio.Handlers()

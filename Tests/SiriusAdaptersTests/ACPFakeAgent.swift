@@ -34,6 +34,7 @@ enum ACPFakeAgent {
     with open(os.path.join(cwd, "fake-acp.args"), "w") as f:
         json.dump({"argv": sys.argv[1:], "socket": os.environ.get("SIRIUS_SOCKET"),
                    "noUpdate": os.environ.get("AGY_CLI_DISABLE_AUTO_UPDATE"),
+                   "configDir": os.environ.get("CURSOR_CONFIG_DIR"),
                    "path": os.environ.get("PATH")}, f)
     log = open(os.path.join(cwd, "fake-acp.log"), "a")
 
