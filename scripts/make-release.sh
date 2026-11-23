@@ -25,6 +25,7 @@
 # The script neither tags, uploads nor pushes. Publishing is:
 #   gh release create v<version> --title "Sirius <version>" \
 #       dist/release/Sirius.dmg dist/release/appcast.xml
+# then scripts/bump-cask.sh <version> for the Homebrew cask.
 #
 #   SIRIUS_DMG=<path>                  use this DMG instead of running make-dmg.sh
 #   SIRIUS_DOWNLOAD_URL_PREFIX=<url/>  the enclosure's URL prefix (default
