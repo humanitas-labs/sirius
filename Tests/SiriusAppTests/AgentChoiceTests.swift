@@ -174,11 +174,11 @@ final class AgentChoiceSettingsTests: XCTestCase {
         XCTAssertFalse(AgentMarks.isSeededCopy(own))
     }
 
-    func testCursorTakesNoEffortAndTheOthersDo() {
-        XCTAssertFalse(registered(.cursor).takesEffort)
-        XCTAssertEqual(registered(.cursor, effort: nil).effortOptions, [nil])
-        XCTAssertTrue(registered(.antigravity).takesEffort)
-        XCTAssertTrue(registered(.claudeCode).takesEffort)
+    func testCursorDefaultsToLowEffortAndOffersEffortOptions() {
+        XCTAssertEqual(AgentChoice.defaultEffort(.cursor), "low")
+        XCTAssertEqual(registered(.cursor, effort: nil).effortOptions,
+                       [nil, "minimal", "low", "medium", "high", "xhigh", "max"])
+        XCTAssertEqual(registered(.cursor, effort: "none").effortOptions.last, "none")
     }
 
     func testRegistrationCarriesTheEditsAndKeepsTheRest() {

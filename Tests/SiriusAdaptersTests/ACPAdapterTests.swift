@@ -27,11 +27,12 @@ final class ACPAdapterTests: XCTestCase {
     }
 
     private func makeAdapter(_ harness: AgentRegistration.Harness = .cursor, profile: ACPProfile = ACPAdapterTests.profile,
-                             model: String? = nil, effort: String? = nil,
+                             model: String? = nil, effort: String? = nil, fast: Bool? = nil,
                              instructions: String? = ACPAdapterTests.instructions) throws -> ACPAdapter {
         let executable = try ACPFakeAgent.install(in: root)
         let registration = AgentRegistration(agent: "ac", name: "ACP", harness: harness,
-                                             executable: executable, root: root.path, model: model, effort: effort)
+                                             executable: executable, root: root.path, model: model, effort: effort,
+                                             fast: fast)
         return ACPAdapter(registration: registration, profile: profile, socketPath: "/tmp/sirius-test/ac.sock",
                           helpersDirectory: URL(fileURLWithPath: "/opt/sirius/Helpers"),
                           instructions: instructions, authenticateTimeout: .milliseconds(300))
@@ -122,6 +123,8 @@ final class ACPAdapterTests: XCTestCase {
         XCTAssertEqual(launched["argv"] as? [String], ["acp"])
         XCTAssertEqual(launched["noUpdate"] as? String, "true")
         XCTAssertEqual(methods(), ["initialize", "session/new"], "no auth method that could open a browser")
+        let client = try XCTUnwrap(request("initialize")?["clientCapabilities"] as? [String: Any])
+        XCTAssertNil(client["_meta"])
     }
 
     func testWhatTheProfilePreparesReachesTheServerAndAFailureDoesNotStopIt() async throws {
@@ -207,6 +210,85 @@ final class ACPAdapterTests: XCTestCase {
         }
         let pid = await adapter.processIdentifier
         XCTAssertNil(pid, "the server is not left running")
+    }
+
+    func testCursorRequestsParameterizedModelPickerAndSelectsBareModels() async throws {
+        try ACPFakeAgent.set(mode: "cursor", in: root)
+        adapter = try makeAdapter(.cursor, model: "muse-wonder-1.0", effort: "high")
+        let info = try await adapter.open(SessionRequest())
+        XCTAssertEqual(info.model, "muse-wonder-1.0")
+        let client = try XCTUnwrap(request("initialize")?["clientCapabilities"] as? [String: Any])
+        let meta = try XCTUnwrap(client["_meta"] as? [String: Any])
+        XCTAssertEqual(meta["parameterizedModelPicker"] as? Bool, true)
+        let sets = received().filter { $0["method"] as? String == "session/set_config_option" }
+            .compactMap { $0["params"] as? [String: Any] }
+        XCTAssertEqual(sets.map { $0["configId"] as? String }, ["model", "effort"])
+        XCTAssertEqual(sets.map { $0["value"] as? String }, ["muse-wonder-1.0", "high"])
+    }
+
+    func testCursorAppliesEffortPastThinkingFastModeAndExtraHigh() async throws {
+        try ACPFakeAgent.set(mode: "cursor", in: root)
+        adapter = try makeAdapter(.cursor, model: "claude-opus-5-5", effort: "high", fast: true)
+        let info = try await adapter.open(SessionRequest())
+        XCTAssertEqual(info.model, "claude-opus-5-5")
+        let claudeSets = received().filter { $0["method"] as? String == "session/set_config_option" }
+            .compactMap { $0["params"] as? [String: Any] }
+        XCTAssertEqual(claudeSets.map { $0["configId"] as? String }, ["model", "effort", "fast"])
+        XCTAssertEqual(claudeSets.map { $0["value"] as? String }, ["claude-opus-5-5", "high", "true"])
+        await adapter.close()
+
+        let before = received().count
+        adapter = try makeAdapter(.cursor, model: "gpt-5.3-codex", effort: "xhigh")
+        let codex = try await adapter.open(SessionRequest())
+        XCTAssertEqual(codex.model, "gpt-5.3-codex")
+        let codexSets = received().dropFirst(before).filter { $0["method"] as? String == "session/set_config_option" }
+            .compactMap { $0["params"] as? [String: Any] }
+        XCTAssertEqual(codexSets.map { $0["configId"] as? String }, ["model", "reasoning"])
+        XCTAssertEqual(codexSets.map { $0["value"] as? String }, ["gpt-5.3-codex", "extra-high"])
+    }
+
+    func testBracketedVariantOptionsMatchBareNamesWithoutMatchingPrefixesOrMismatchedVariants() async throws {
+        try ACPFakeAgent.set(mode: "variants", in: root)
+        adapter = try makeAdapter(.cursor, model: "muse-wonder-1.0")
+        let muse = try await adapter.open(SessionRequest())
+        XCTAssertEqual(muse.model, "muse-wonder-1.0[context=300k,effort=high]")
+        await adapter.close()
+
+        adapter = try makeAdapter(.cursor, model: "default")
+        let auto = try await adapter.open(SessionRequest())
+        XCTAssertEqual(auto.model, "default[]")
+        await adapter.close()
+
+        // A shorter prefix must not match gpt-5.4-mini[reasoning=medium].
+        adapter = try makeAdapter(.cursor, model: "gpt-5.4")
+        do {
+            _ = try await adapter.open(SessionRequest())
+            XCTFail("gpt-5.4 should not match gpt-5.4-mini")
+        } catch let error as ACPAdapterError {
+            guard case .modelUnavailable("Cursor", "gpt-5.4", _) = error else { return XCTFail("\(error)") }
+        }
+
+        // Explicit bracketed parameters must not silently match a different variant.
+        adapter = try makeAdapter(.cursor, model: "composer-2.5[fast=false]")
+        do {
+            _ = try await adapter.open(SessionRequest())
+            XCTFail("composer-2.5[fast=false] should not match composer-2.5[fast=true]")
+        } catch let error as ACPAdapterError {
+            guard case .modelUnavailable("Cursor", "composer-2.5[fast=false]", _) = error else {
+                return XCTFail("\(error)")
+            }
+        }
+    }
+
+    func testHandWrittenBracketedModelAppliesParametersInParameterizedMode() async throws {
+        try ACPFakeAgent.set(mode: "cursor", in: root)
+        adapter = try makeAdapter(.cursor, model: "claude-opus-5-5[effort=high,fast=false]")
+        let info = try await adapter.open(SessionRequest())
+        XCTAssertEqual(info.model, "claude-opus-5-5")
+        let sets = received().filter { $0["method"] as? String == "session/set_config_option" }
+            .compactMap { $0["params"] as? [String: Any] }
+        XCTAssertEqual(sets.map { $0["configId"] as? String }, ["model", "effort", "fast"])
+        XCTAssertEqual(sets.map { $0["value"] as? String }, ["claude-opus-5-5", "high", "false"])
     }
 
     // MARK: sign-in and start failures

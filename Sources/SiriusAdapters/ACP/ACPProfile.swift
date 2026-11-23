@@ -21,6 +21,9 @@ struct ACPProfile: Sendable {
     var arguments: @Sendable (AgentRegistration) -> [String]
     // Added to the child's environment.
     var environment: [String: String] = [:]
+    // Extra keys sent under initialize's clientCapabilities._meta (ACP's
+    // extension point for server-specific capabilities).
+    var clientCapabilitiesMeta: [String: JSONValue] = [:]
     // Run before each start, with the adapter's environment: readies what
     // the server needs on disk and returns more environment for it.
     var prepare: @Sendable (AgentRegistration, [String: String]) throws -> [String: String] = { _, _ in [:] }
@@ -59,14 +62,16 @@ extension ACPProfile {
     // the MCP servers session/new names, and asks permission for each call
     // of their tools, which the adapter allows.
     //
-    // The model is the session's "model" config option, whose values carry
-    // their parameters ("gemini-4-carbon[reasoning_effort=medium]"); a
-    // registered bare name matches the option of that name. Not --model:
-    // that flag works before `acp`, but it also rewrites the user's own
-    // default model in ~/.cursor/cli-config.json (seen on 2026.11.18), and
-    // an agent's model is not the user's default. Setting the config
+    // The model is set through the session's "model" config option, never
+    // --model: that flag works before `acp`, but it also rewrites the user's
+    // own default model in ~/.cursor/cli-config.json. Setting the config
     // option rewrites it too (checked 2026.11.23), so the server runs on
-    // the agent's own config directory: see CursorConfig.
+    // the agent's own config directory: see CursorConfig. Advertising
+    // clientCapabilities._meta.parameterizedModelPicker asks `agent acp` for
+    // the parameterized catalog (bare model ids plus separate thought_level
+    // and model_config options, matching the interactive CLI) rather than
+    // its exploded variant list ("model[param=value]"). Older builds that
+    // ignore the capability still work through ACPConfig's bracket matching.
     //
     // The root flags go before `acp`, as the docs show for --api-key:
     // - --trust: the agent's root, without the prompt nobody would answer.
@@ -77,6 +82,7 @@ extension ACPProfile {
         product: "Cursor", command: "agent", otherCommands: ["cursor-agent"], signIn: "agent login",
         authMethod: "cursor_login",
         arguments: { _ in ["--trust", "--approve-mcps", "acp"] },
+        clientCapabilitiesMeta: ["parameterizedModelPicker": .bool(true)],
         prepare: { registration, environment in
             try CursorConfig.isolate(user: CursorConfig.userDirectory(environment: environment),
                                      own: CursorConfig.agentDirectory(agent: registration.agent))

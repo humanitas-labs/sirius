@@ -116,13 +116,17 @@ public actor ACPAdapter: Adapter {
         self.connection = connection
 
         do {
+            // Agents use their own files and shells: no fs/*, no terminal/*.
+            var clientCapabilities: [String: JSONValue] = [
+                "fs": .object(["readTextFile": .bool(false), "writeTextFile": .bool(false)]),
+                "terminal": .bool(false),
+            ]
+            if !profile.clientCapabilitiesMeta.isEmpty {
+                clientCapabilities["_meta"] = .object(profile.clientCapabilitiesMeta)
+            }
             let initialized = try await connection.request("initialize", .object([
                 "protocolVersion": .number(Double(Self.protocolVersion)),
-                // Agents use their own files and shells: no fs/*, no terminal/*.
-                "clientCapabilities": .object([
-                    "fs": .object(["readTextFile": .bool(false), "writeTextFile": .bool(false)]),
-                    "terminal": .bool(false),
-                ]),
+                "clientCapabilities": .object(clientCapabilities),
                 "clientInfo": .object(["name": .string("sirius"), "title": .string("Sirius"),
                                        "version": .string(Self.clientVersion)]),
             ]))
@@ -298,12 +302,12 @@ public actor ACPAdapter: Adapter {
         return OpenedSession(id: id, options: result["configOptions"]?.array ?? [], promptApplied: promptApplied)
     }
 
-    // Sets the registered model and effort through the session's config
-    // options and returns the model the session says it runs on, else the
-    // registered one.
+    // Sets the registered model, effort and fast mode through the session's
+    // config options and returns the model the session says it runs on, else
+    // the registered one.
     // A registered model the session does not offer is refused here, with
-    // what it does offer. An effort it does not offer is left alone: the
-    // levels differ by model.
+    // what it does offer. Parameters a model does not offer are left alone:
+    // the options differ by model.
     private func configure(_ connection: JSONRPCStdio, session: String, options: [JSONValue]) async throws -> String? {
         var options = options
         func set(_ choice: ACPConfig.Choice) async throws {
@@ -312,15 +316,30 @@ public actor ACPAdapter: Adapter {
             ]))
             if let updated = result["configOptions"]?.array { options = updated }
         }
+        var inlineParameters: [(key: String, value: String)] = []
         if let wanted = registration.model, let offered = ACPConfig.option(in: options, category: "model") {
             guard let choice = ACPConfig.choice(in: offered, wanted: wanted) else {
                 throw ACPAdapterError.modelUnavailable(product: profile.product, wanted,
                                                        available: ACPConfig.values(of: offered))
             }
             try await set(choice)
+            if choice.value.lowercased() != wanted.lowercased() {
+                inlineParameters = ACPConfig.splitParameters(wanted).parameters
+            }
         }
-        if let wanted = registration.effort, let offered = ACPConfig.option(in: options, category: "thought_level"),
-           let choice = ACPConfig.choice(in: offered, wanted: wanted) {
+        for parameter in inlineParameters {
+            if let offered = ACPConfig.option(in: options, id: parameter.key),
+               let choice = ACPConfig.choice(in: offered, wanted: parameter.value) {
+                try? await set(choice)
+            }
+        }
+        if let wanted = registration.effort,
+           let choice = ACPConfig.choice(in: options, category: "thought_level", wanted: wanted) {
+            try? await set(choice)
+        }
+        if let fast = registration.fast,
+           let offered = ACPConfig.option(in: options, id: "fast"),
+           let choice = ACPConfig.choice(in: offered, wanted: fast ? "true" : "false") {
             try? await set(choice)
         }
         return ACPConfig.option(in: options, category: "model")?["currentValue"]?.string ?? registration.model
@@ -409,6 +428,20 @@ enum ACPConfig {
         options.first { $0["category"]?.string == category && $0["id"]?.string != nil }
     }
 
+    static func option(in options: [JSONValue], id: String) -> JSONValue? {
+        let target = id.lowercased()
+        return options.first { $0["id"]?.string?.lowercased() == target }
+    }
+
+    // First option in `category` that offers `wanted` (Cursor puts both
+    // `thinking` and `effort` in `thought_level`).
+    static func choice(in options: [JSONValue], category: String, wanted: String) -> Choice? {
+        for offered in options where offered["category"]?.string == category {
+            if let match = choice(in: offered, wanted: wanted) { return match }
+        }
+        return nil
+    }
+
     // Each value with its display name, groups flattened.
     static func entries(of option: JSONValue) -> [(value: String, name: String?)] {
         (option["options"]?.array ?? []).flatMap { entry -> [(value: String, name: String?)] in
@@ -421,21 +454,44 @@ enum ACPConfig {
 
     static func values(of option: JSONValue) -> [String] { entries(of: option).map(\.value) }
 
+    // Splits a Cursor-style bracketed value ("model[k=v,...]" or "default[]")
+    // into its base id and key/value parameters.
+    static func splitParameters(_ value: String) -> (base: String, parameters: [(key: String, value: String)]) {
+        guard value.hasSuffix("]"), let open = value.firstIndex(of: "["), open > value.startIndex else {
+            return (value, [])
+        }
+        let base = value[..<open].trimmingCharacters(in: .whitespaces)
+        let body = value[value.index(after: open)..<value.index(before: value.endIndex)]
+        guard !base.isEmpty, !body.contains("["), !body.contains("]") else { return (value, []) }
+        let parameters: [(key: String, value: String)] = body.split(separator: ",").compactMap { pair in
+            guard let eq = pair.firstIndex(of: "=") else { return nil }
+            let key = pair[..<eq].trimmingCharacters(in: .whitespaces)
+            let val = pair[pair.index(after: eq)...].trimmingCharacters(in: .whitespaces)
+            return key.isEmpty || val.isEmpty ? nil : (key, val)
+        }
+        return (base, parameters)
+    }
+
     // The value that is `wanted`, by value, else by name without case, else
-    // through the names Sirius's effort levels go by elsewhere ("xhigh" is
-    // Antigravity's "Extra").
+    // through effort aliases ("xhigh" is Antigravity's "Extra" and Cursor's
+    // "extra-high"), else matching a bare name against a bracketed variant's
+    // base id ("muse-wonder-1.0" → "muse-wonder-1.0[context=300k,effort=high]")
+    // or a bracketed name against a parameterized server's bare id.
     static func choice(in option: JSONValue, wanted: String) -> Choice? {
         guard let id = option["id"]?.string else { return nil }
         let entries = entries(of: option)
         let lowered = wanted.lowercased()
         let names = [lowered] + (aliases[lowered] ?? [])
+        let wantedBase = splitParameters(wanted).base.lowercased()
         let match = entries.first { $0.value == wanted }
             ?? entries.first { names.contains($0.value.lowercased()) }
             ?? entries.first { entry in entry.name.map { names.contains($0.lowercased()) } ?? false }
+            ?? entries.first { splitParameters($0.value).base.lowercased() == lowered }
+            ?? (wantedBase != lowered ? entries.first { $0.value.lowercased() == wantedBase } : nil)
         return match.map { Choice(option: id, value: $0.value) }
     }
 
-    static let aliases = ["xhigh": ["extra", "extra high", "extra_high"]]
+    static let aliases = ["xhigh": ["extra", "extra high", "extra_high", "extra-high"]]
 }
 
 public enum ACPAdapterError: Error, Equatable, CustomStringConvertible {

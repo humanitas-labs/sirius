@@ -97,15 +97,10 @@ final class AgentChoice: ObservableObject, Identifiable {
 
     // The effort a new registration starts with. Claude at low acks in about
     // 2.9 s at the median against 4.2 s at its default, with no more misreads
-    // (front-desk test 2026.10.27). Codex starts at low too;
-    // its latency is not measured yet. Muse
-    // follows them; its latency is not measured either, nor Antigravity's.
-    // Cursor has no effort of its own: it is part of the model's name.
+    // (front-desk test 2026.10.27). Codex, Cursor, Muse and Antigravity start
+    // at low too; their latency is not measured yet.
     static func defaultEffort(_ harness: AgentRegistration.Harness) -> String? {
-        switch harness {
-        case .claudeCode, .codex, .museCode, .antigravity: "low"
-        case .cursor: nil
-        }
+        "low"
     }
 
     var name: String { Self.name(harness) }
@@ -258,16 +253,17 @@ extension AgentChoice {
         return [(root as NSString).lastPathComponent, model, effort].joined(separator: " · ")
     }
 
-    // The efforts each harness's CLI takes: Claude Code's --effort and
-    // Codex's model_reasoning_effort, and Muse Code's reasoningEffort
-    // without "none", which Meta's provider refuses. Antigravity's are
-    // the three thinking levels agy 1.5.11 offers; Cursor has none (see takesEffort).
+    // The efforts each harness's CLI takes: Claude Code's --effort, Codex's
+    // model_reasoning_effort, Cursor's ACP thought_level option (varies by
+    // model; levels a model does not offer are left alone), Antigravity's
+    // three thinking levels, and Muse Code's reasoningEffort without "none",
+    // which Meta's provider refuses.
     static func efforts(_ harness: AgentRegistration.Harness) -> [String] {
         switch harness {
         case .claudeCode: ["low", "medium", "high", "xhigh", "max"]
         case .codex: ["minimal", "low", "medium", "high", "xhigh"]
         case .museCode: ["minimal", "low", "medium", "high", "xhigh", "max", "ultra"]
-        case .cursor: []
+        case .cursor: ["minimal", "low", "medium", "high", "xhigh", "max"]
         case .antigravity: ["low", "medium", "high"]
         }
     }
@@ -361,13 +357,6 @@ extension AgentChoice {
         guard let model else { return nil }
         return Self.models(harness).first { $0.id == model }?.maker
     }
-
-    // Whether the Effort menu does anything. Cursor's does not: over ACP
-    // each of its models comes at one effort ("claude-opus-5-5[effort=medium,
-    // …]") and the server refuses any other value (checked on 2026.08.11);
-    // only its --model flag takes another, and that flag rewrites the
-    // person's own default model in ~/.cursor/cli-config.json.
-    var takesEffort: Bool { harness != .cursor }
 
     // The Model menu: nil (the user's default), the harness's main models,
     // and one written by hand that is not among them, kept so it shows.

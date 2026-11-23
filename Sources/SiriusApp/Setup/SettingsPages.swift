@@ -375,19 +375,11 @@ private struct AgentDetail: View {
                         }
                     }
                 }
-                if agent.takesEffort {
-                    PillRow("Effort") { // TODO(copy): copy
-                        PillMenu(title: AgentChoice.effortLabel(agent.effort)) {
-                            ForEach(agent.effortOptions, id: \.self) { option in
-                                Button(AgentChoice.effortLabel(option)) { agent.effort = option; model.save(agent) }
-                            }
+                PillRow("Effort") { // TODO(copy): copy
+                    PillMenu(title: AgentChoice.effortLabel(agent.effort)) {
+                        ForEach(agent.effortOptions, id: \.self) { option in
+                            Button(AgentChoice.effortLabel(option)) { agent.effort = option; model.save(agent) }
                         }
-                    }
-                } else {
-                    // TODO(copy): copy
-                    PillRow("Effort", note: "\(AgentChoice.product(agent.harness)) sets it with the model.") {
-                        PillMenu(title: "Set by model") {} // TODO(copy): copy
-                            .disabled(true)
                     }
                 }
             }
