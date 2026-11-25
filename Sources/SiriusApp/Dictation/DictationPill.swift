@@ -1008,14 +1008,18 @@ private struct MarkView: View {
     var body: some View {
         if let image {
             if image.isTemplate {
-                Image(nsImage: image)
-                    .renderingMode(.template)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .foregroundColor(pillBlue)
-                    // Drawn flat first, or the window stretches it wide (LaunchSparkle).
-                    .drawingGroup()
-                    .shadow(color: pillBlue.opacity(0.75), radius: LaunchSparkle.glow)
+                // Pre-rendered once, tinted and glowing (SiriusMark.glowing):
+                // no live Metal pass on the first press.
+                GeometryReader { geo in
+                    let side = min(geo.size.width, geo.size.height)
+                    let pad = SiriusMark.glowPadding(LaunchSparkle.glow)
+                    if side > 0, let star = SiriusMark.glowing(NSColor(pillBlue), side: side, glow: LaunchSparkle.glow) {
+                        Image(nsImage: star)
+                            .resizable()
+                            .frame(width: side + pad * 2, height: side + pad * 2)
+                            .position(x: geo.size.width / 2, y: geo.size.height / 2)
+                    }
+                }
             } else {
                 Image(nsImage: image)
                     .resizable()
@@ -1081,15 +1085,14 @@ private struct LaunchSparkle: View {
     // The silver star as a template, tinted like the symbol it replaced; the
     // symbol where the bundle has no star.
     @ViewBuilder private var star: some View {
-        if let image = SiriusMark.mark ?? SiriusMark.silver {
-            Image(nsImage: image).renderingMode(.template).resizable().aspectRatio(contentMode: .fit)
-                .frame(width: Self.size * Self.starScale, height: Self.size * Self.starScale)
-                // Drawn flat first: composited live, the template star came
-                // out about 1.7 times wider than tall (offscreen snapshots
-                // drew it square).
-                .drawingGroup()
-                // A soft glow in its own color, so it reads as bright as the menu-bar star.
-                .shadow(color: color.opacity(0.75), radius: Self.glow)
+        // Pre-rendered once, tinted and with a soft glow in its own color
+        // (SiriusMark.glowing): no live Metal pass on the first press.
+        if let image = SiriusMark.glowing(NSColor(color), side: Self.size * Self.starScale, glow: Self.glow) {
+            let side = Self.size * Self.starScale
+            Image(nsImage: image).resizable()
+                .frame(width: side + SiriusMark.glowPadding(Self.glow) * 2,
+                       height: side + SiriusMark.glowPadding(Self.glow) * 2)
+                .frame(width: side, height: side)
         } else {
             Image(systemName: "sparkle").font(.system(size: Self.size, weight: .medium))
         }

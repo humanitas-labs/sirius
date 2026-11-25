@@ -510,8 +510,11 @@ final class ComposerController {
 
     // Reads the agents again, as each open does: at each dictating press,
     // so a switch during the hold steps through the agents there are now.
-    func reloadAgents() {
-        Task { await loadAgents() }
+    func reloadAgents(then done: (() -> Void)? = nil) {
+        Task {
+            await loadAgents()
+            done?()
+        }
     }
 
     private func send() {

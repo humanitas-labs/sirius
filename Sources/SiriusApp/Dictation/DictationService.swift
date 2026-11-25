@@ -270,10 +270,10 @@ final class DictationService {
             onPress?()
             forwarding = false
             self.mode = mode
-            // Who is addressable, read again for this transcript, and who
-            // a / during the hold steps through.
+            // Who is addressable, read again for this transcript. The
+            // composer's list, which a / steps through, is reloaded only
+            // when a / comes (.switchAgent), not on every press.
             agents.refresh()
-            composer.reloadAgents()
             // Never a request from a press: the prompt belongs to setup.
             guard Permissions.microphone == .granted else {
                 if !microphoneLogged {
@@ -317,9 +317,14 @@ final class DictationService {
             // for the composer and the next hold. Delivery reads it once
             // the transcript is in. With the composer open its own logo
             // shows the change; otherwise the pill does.
-            guard forwarding, mode == .agent, let agent = composer.nextAgent() else { return }
-            if surface.route == .pill { pill.switched(to: Self.logo(agent)) }
-            SiriusLog.dictation.info("dictation: switched to \(agent) during the hold")
+            // The list is read fresh here, the first moment it is needed.
+            guard forwarding, mode == .agent else { return }
+            composer.reloadAgents { [weak self] in
+                guard let self, self.forwarding, self.mode == .agent,
+                      let agent = self.composer.nextAgent() else { return }
+                if self.surface.route == .pill { self.pill.switched(to: Self.logo(agent)) }
+                SiriusLog.dictation.info("dictation: switched to \(agent) during the hold")
+            }
         case .released:
             guard forwarding else { return }
             forwarding = false
