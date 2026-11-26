@@ -82,6 +82,14 @@ final class DictationPill: DictationObserver {
     // during the new one: it is not this pill's to close.
     private var recording = false
     private var transcriptions = 0
+    // The press has opened the pill and its capture has not yet started or
+    // failed (pressed).
+    private var opened = false
+    // This hold's bars wait for its first audio buffer (bars); whether it
+    // has come; and the opening whose mark hold ran out before it did.
+    private var awaitsAudio = false
+    private var live = false
+    private var barsDue: Int?
     // Keeps the pill off every screen, for the snapshots
     // (DictationSnapshots).
     var parksOffscreen = false
@@ -105,6 +113,9 @@ final class DictationPill: DictationObserver {
     var isOnActiveSpace: (NSWindow) -> Bool = { $0.isOnActiveSpace }
     // How many panels the pill has built, for the tests.
     private(set) var panelsBuilt = 0
+    // Whether the last open had to build a new panel, for the hold's timing
+    // line (DictationService).
+    private(set) var rebuiltOnOpen = false
     // The displays have slept and woken since the panel was built: the next
     // open gets a new one rather than risk a stranded window, as the toast
     // does (ToastPresenter).
@@ -124,8 +135,21 @@ final class DictationPill: DictationObserver {
         }
     }
 
+    // How long after the displays wake the ordered-out panel is replaced, so
+    // the first press after a wake does not build one while the user waits
+    // (.plan/pill-lag.md). Not at the wake itself: the screens are still
+    // settling then. A press that comes sooner rebuilds it as it opens.
+    static let wakeRebuildDelay: TimeInterval = 2
+
     func displaysWoke() {
         wokeSinceBuilt = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + Self.wakeRebuildDelay) { [weak self] in
+            MainActor.assumeIsolated {
+                // A pill that is up keeps its panel until it next opens.
+                guard let self, self.wokeSinceBuilt, self.window?.isVisible != true else { return }
+                self.rebuildWindow("the displays woke since it was built", unexpected: false)
+            }
+        }
     }
 
     // A paste hold (⌃fn): a text-cursor glyph leads the bars, so the press
@@ -145,11 +169,47 @@ final class DictationPill: DictationObserver {
 
     // MARK: Lifecycle, as Parrot's DictationObserver
 
-    // The pill opens on the logo of the agent the hold is going to, read
-    // as it is pressed; a paste or no agent opens on the mark as before.
+    // The press itself, before the microphone starts: the pill opens now and
+    // its first frame is drawn, so the wait for the input (ParrotCore builds
+    // and starts it on the main thread, 80 ms or so and near half a second
+    // after a wake) is not a wait for the pill (.plan/pill-lag.md). The
+    // dictationStarted that follows only brings the bars to life; a capture
+    // that fails closes the pill through dictationFailed, as it always did.
+    func pressed() {
+        opened = true
+        awaitsAudio = true
+        live = false
+        barsDue = nil
+        open()
+        // show() grows the pill on the next run loop turn, which would come
+        // after the capture's start. Lay the new content out at scale 0,
+        // start the grow and draw it now.
+        guard let window, window.isVisible, !model.visible else { return }
+        window.contentView?.layoutSubtreeIfNeeded()
+        model.visible = true
+        window.contentView?.layoutSubtreeIfNeeded()
+        window.displayIfNeeded()
+        CATransaction.flush()
+    }
+
+    // The capture is running. A pill the press has opened carries on; alone
+    // (the Debug preview, the tests) this opens it.
     func dictationStarted() {
         recording = true
         model.waves.start()
+        if opened {
+            opened = false
+            return
+        }
+        // Opened by the start alone: the bars follow the mark's hold, with
+        // no wait for audio.
+        awaitsAudio = false
+        open()
+    }
+
+    // The pill opens on the logo of the agent the hold is going to, read
+    // as it is pressed; a paste or no agent opens on the mark as before.
+    private func open() {
         let logo = destination?()
         var still = Transaction()
         still.disablesAnimations = true
@@ -166,9 +226,22 @@ final class DictationPill: DictationObserver {
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.markHold) { [weak self] in
             MainActor.assumeIsolated {
                 guard let self, self.generation == shown, self.model.state == .mark else { return }
-                self.show(.recording)
+                self.bars()
             }
         }
+    }
+
+    // The mark's hold is over: the bars come in, once the input is live. A
+    // pill the press opened (pressed) waits on the mark for the first audio
+    // buffer, so the bars mean "speak now": what is said before it is not
+    // recorded, and a Bluetooth microphone can take a good part of a second
+    // to deliver any (.plan/pill-lag.md). level() brings them in then.
+    private func bars() {
+        guard !awaitsAudio || live else {
+            barsDue = generation
+            return
+        }
+        show(.recording)
     }
 
     // The hold's agent changed (/ during the hold): the pill goes back to
@@ -192,7 +265,7 @@ final class DictationPill: DictationObserver {
         DispatchQueue.main.asyncAfter(deadline: .now() + Self.switchHold) { [weak self] in
             MainActor.assumeIsolated {
                 guard let self, self.generation == shown, self.model.state == .mark, self.recording else { return }
-                self.show(.recording)
+                self.bars()
             }
         }
     }
@@ -322,6 +395,7 @@ final class DictationPill: DictationObserver {
     // without the red. Anything else is a
     // transcription or a delivery failing.
     func dictationFailed(_ error: Error) {
+        opened = false
         switch error {
         case DictationError.cancelled, is CaptureError:
             recording = false
@@ -340,7 +414,18 @@ final class DictationPill: DictationObserver {
     nonisolated func level(_ value: Float) {
         Task { @MainActor in
             self.model.waves.pushLevel(value)
+            self.audioArrived()
         }
+    }
+
+    // The first buffer of this hold: the input is live, and bars that were
+    // waiting on it come in.
+    private func audioArrived() {
+        guard recording, !live else { return }
+        live = true
+        guard let due = barsDue else { return }
+        barsDue = nil
+        if due == generation, model.state == .mark { show(.recording) }
     }
 
     // A model download or warm-up: `fraction` in 0...1 with a short label;
@@ -654,6 +739,7 @@ final class DictationPill: DictationObserver {
     // of Chrome's full-screen ones, while the toast panel built that day was
     // on all 6). A panel built afresh joins every Space.
     private func orderIn() {
+        rebuiltOnOpen = false
         if wokeSinceBuilt { rebuildWindow("the displays woke since it was built", unexpected: false) }
         guard let window else { return }
         positionAtBottomCenter(window)
@@ -669,6 +755,7 @@ final class DictationPill: DictationObserver {
     // Replaces the panel, ordered out, with a new one at the same alpha.
     // The model and the ring move over with the content.
     private func rebuildWindow(_ reason: String, unexpected: Bool) {
+        rebuiltOnOpen = true
         let line = "dictation pill panel rebuilt: \(reason)"
         if unexpected { SiriusLog.dictation.error(line) } else { SiriusLog.dictation.info(line) }
         let alpha = window?.alphaValue ?? 1

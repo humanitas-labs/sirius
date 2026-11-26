@@ -269,4 +269,86 @@ final class DictationPillTests: XCTestCase {
         pill.dictationFailed(DictationError.cancelled)
         run(DictationPill.scaleDuration + 0.1)
     }
+
+    // The press opens the pill at once, before the capture starts; the
+    // start that follows keeps that opening and its hold, without opening
+    // it again.
+    func testThePressOpensThePillBeforeTheCaptureStarts() {
+        let pill = makePill()
+        pill.pressed()
+        XCTAssertTrue(pill.isOrderedIn, "ordered in on the press")
+        XCTAssertTrue(pill.isShown, "growing on the press, not a run loop turn later")
+        XCTAssertEqual(pill.shownState, .mark)
+        pill.dictationStarted()
+        XCTAssertEqual(pill.shownState, .mark, "the start does not open it again")
+        pill.level(0.1)
+        run(hold)
+        assertShowing(pill, .recording, "the bars after the mark's hold")
+        pill.dictationTranscribing()
+        pill.dictationFinished()
+        run(DictationPill.transcribingHold + DictationPill.scaleDuration + 0.2)
+        assertGone(pill, "closed")
+        // The next start alone opens it, as before.
+        pill.dictationStarted()
+        run(hold)
+        assertShowing(pill, .recording, "a start with no press opens the pill")
+        pill.dictationFailed(DictationError.cancelled)
+        run(DictationPill.scaleDuration + 0.1)
+    }
+
+    // A capture that fails as it starts closes the pill the press opened.
+    func testACaptureFailingAtThePressClosesThePill() {
+        let pill = makePill()
+        pill.pressed()
+        pill.dictationFailed(CaptureError.noInputDevice)
+        run(DictationPill.scaleDuration + 0.2)
+        assertGone(pill, "closed after the capture failed")
+        pill.dictationStarted()
+        run(hold)
+        assertShowing(pill, .recording, "the next hold opens it")
+        pill.dictationFailed(DictationError.cancelled)
+        run(DictationPill.scaleDuration + 0.1)
+    }
+
+    // A while after the displays wake, the ordered-out panel is replaced,
+    // so the next press opens on it without building one.
+    func testThePanelIsRebuiltAfterAWakeAheadOfThePress() {
+        let pill = makePill()
+        pill.isOnActiveSpace = { _ in true }
+        pill.displaysWoke()
+        run(DictationPill.wakeRebuildDelay + 0.2)
+        XCTAssertEqual(pill.panelsBuilt, 2, "rebuilt after the wake")
+        pill.pressed()
+        XCTAssertEqual(pill.panelsBuilt, 2, "the press builds none")
+        XCTAssertFalse(pill.rebuiltOnOpen)
+        pill.dictationFailed(DictationError.cancelled)
+        run(DictationPill.scaleDuration + 0.1)
+    }
+
+    // A pill the press opened stays on the mark until the input delivers
+    // its first buffer, however long that takes, then shows the bars; a
+    // buffer inside the mark's hold does not cut the hold short.
+    func testTheBarsWaitForTheFirstAudio() {
+        let pill = makePill()
+        pill.pressed()
+        pill.dictationStarted()
+        run(hold + 0.3)
+        assertShowing(pill, .mark, "on the mark while the input is silent")
+        pill.level(0.1)
+        run(0.1)
+        assertShowing(pill, .recording, "the bars with the first buffer")
+        pill.dictationTranscribing()
+        pill.dictationFinished()
+        run(DictationPill.transcribingHold + DictationPill.scaleDuration + 0.2)
+        assertGone(pill, "closed")
+        pill.pressed()
+        pill.dictationStarted()
+        pill.level(0.1)
+        run(0.05)
+        assertShowing(pill, .mark, "the mark keeps its hold")
+        run(hold)
+        assertShowing(pill, .recording, "then the bars")
+        pill.dictationFailed(DictationError.cancelled)
+        run(DictationPill.scaleDuration + 0.1)
+    }
 }

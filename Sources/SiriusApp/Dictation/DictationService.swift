@@ -112,6 +112,15 @@ final class DictationService {
     // .paste if the chord's modifier joins late, and handed to the delivery
     // at release.
     private var mode: DictationMode = .agent
+    // When the last hold was released, for isBusy.
+    private var releasedAt: Date?
+
+    // A hold is recording, or one was released in the last few seconds and
+    // its transcript may still be on its way to an agent: the agents are
+    // not consolidated meanwhile (AgentTurnQueue).
+    var isBusy: Bool {
+        forwarding || releasedAt.map { Date().timeIntervalSince($0) < 10 } == true
+    }
 
     private var grantTimer: Timer?
     private var tapFailureLogged = false
@@ -304,7 +313,18 @@ final class DictationService {
                                                    composerFocused: composer.isFocused)
             pill.pastes = mode == .paste
             SiriusLog.dictation.info("dictation: \(mode == .paste ? "paste" : "agent") hold")
+            // The pill opens before the microphone starts, which holds the
+            // main thread; both are timed, each hold (.plan/pill-lag.md).
+            let pressed = CFAbsoluteTimeGetCurrent()
+            let showsPill = surface.route == .pill
+            if showsPill { pill.pressed() }
+            let opened = CFAbsoluteTimeGetCurrent()
             loop().handle(.pressed)
+            let started = CFAbsoluteTimeGetCurrent()
+            SiriusLog.dictation.info(String(
+                format: "dictation: press: %@ in %.0f ms, capture started in %.0f ms",
+                showsPill ? (pill.rebuiltOnOpen ? "pill opened on a new panel" : "pill opened") : "composer waves",
+                (opened - pressed) * 1000, (started - opened) * 1000))
         case .paste:
             // ⌃ joined within the chord window: the recording carries on,
             // and its transcript is pasted.
@@ -328,6 +348,7 @@ final class DictationService {
         case .released:
             guard forwarding else { return }
             forwarding = false
+            releasedAt = Date()
             delivery.mode = mode
             controller?.handle(.released)
         case .cancelled:
@@ -358,7 +379,7 @@ final class DictationService {
         let controller = DictationController(
             capture: capture,
             transcriber: transcriber,
-            processors: [DictionaryProcessor(store: dictionary)],
+            processors: [DictionaryProcessor(store: dictionary), SilencePhantomProcessor()],
             observers: [surface, log],
             delivery: delivery,
             context: { [weak self] in self?.context() ?? TranscriptionContext() }
@@ -463,6 +484,18 @@ final class DictationService {
     }
 }
 
+// Drops a transcript that is only what Whisper writes for silence
+// (SilencePhantom): nothing is delivered, as for an empty transcript.
+private struct SilencePhantomProcessor: TranscriptProcessor {
+    func process(_ transcript: Transcript) -> Transcript {
+        guard SilencePhantom.isPhantom(transcript.text) else { return transcript }
+        SiriusLog.dictation.info("dictation: dropped a transcript that was only silence's phantom word")
+        var empty = transcript
+        empty.text = ""
+        return empty
+    }
+}
+
 // The controller's transcriber while the model loads: waits for the load,
 // then transcribes with it. Replaced by the loaded transcriber once it is in.
 private struct PendingTranscriber: Transcriber {
@@ -546,8 +579,11 @@ final class DictationSurface: DictationObserver {
 @MainActor
 private final class DictationLog: DictationObserver {
     func dictationFinished(_ result: DictationResult) {
+        // Press to first sample is how long the input took to deliver audio:
+        // what is said before it is not recorded (.plan/pill-lag.md).
+        let first = result.pressToFirstSample.map { String(format: ", first sample %.0f ms after the press", $0 * 1000) } ?? ""
         SiriusLog.dictation.info(String(format: "dictation: %.2fs of audio, %d chars, transcribed in %.2fs, delivered %.2fs after release",
-                                        result.captureDuration, result.charCount, result.transcriptionTime, result.releaseToText))
+                                        result.captureDuration, result.charCount, result.transcriptionTime, result.releaseToText) + first)
     }
 
     func dictationFailed(_ error: Error) {
