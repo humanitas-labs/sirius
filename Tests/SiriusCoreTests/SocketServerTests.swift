@@ -173,6 +173,61 @@ final class SocketServerTests: XCTestCase {
         XCTAssertTrue(commands.received.isEmpty)
     }
 
+    // A frame written slowly is read to its end: each chunk re-arms the
+    // inactivity window, and the budget alone bounds the whole frame.
+    func testASlowlyWrittenFrameIsReadToItsEnd() throws {
+        var settings = SocketServerSettings()
+        settings.readDeadline = 0.3
+        settings.readBudget = 1.5
+        let commands = RecordingCommandQueue()
+        let server = try makeServer(commands, settings)
+        defer { server.close() }
+        let path = try server.add(agent: "dev")
+
+        let fd = try SocketTestClient.connect(path)
+        defer { Darwin.close(fd) }
+        let data = Data((toast + "\n").utf8)
+        let piece = max(1, data.count / 6)
+        var offset = 0
+        while offset < data.count {
+            let end = min(offset + piece, data.count)
+            XCTAssertTrue(SocketTestClient.writeAll(fd, data.subdata(in: offset..<end)))
+            offset = end
+            if offset < data.count { usleep(120_000) }
+        }
+        // More than the 0.3 s window in total, well under the budget.
+        let reply = try XCTUnwrap(SocketTestClient.readToEnd(fd, timeout: 2))
+        XCTAssertEqual(try Reply.parse(reply).id, .string("1"))
+        XCTAssertEqual(commands.received.count, 1)
+    }
+
+    // The budget alone bounds a frame: a drip that keeps the window re-armed
+    // is closed once the budget has passed.
+    func testAFrameThatOutlivesItsBudgetIsClosed() throws {
+        var settings = SocketServerSettings()
+        settings.readDeadline = 0.4
+        settings.readBudget = 0.6
+        let commands = RecordingCommandQueue()
+        let server = try makeServer(commands, settings)
+        defer { server.close() }
+        let path = try server.add(agent: "dev")
+
+        let start = Date()
+        let fd = try SocketTestClient.connect(path)
+        defer { Darwin.close(fd) }
+        var closed = false
+        while Date().timeIntervalSince(start) < 3 {
+            if !SocketTestClient.writeAll(fd, Data("x".utf8)) {
+                closed = true
+                break
+            }
+            usleep(50_000)
+        }
+        XCTAssertTrue(closed, "the connection was closed once the budget passed")
+        XCTAssertGreaterThan(Date().timeIntervalSince(start), 0.5, "not the window alone")
+        XCTAssertTrue(commands.received.isEmpty)
+    }
+
     func testConnectionsOverTheCapAreClosedAtOnce() throws {
         var settings = SocketServerSettings()
         settings.readDeadline = 30

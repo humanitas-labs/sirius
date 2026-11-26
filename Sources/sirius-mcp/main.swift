@@ -25,7 +25,8 @@ func writeLine(_ line: String) -> Bool {
     return true
 }
 
-// Calls run one at a time, in order; each waits at most SIRIUS_TIMEOUT.
+// Calls run one at a time, in order; each waits SIRIUS_TIMEOUT plus the
+// transfer allowance for its frame's size.
 while let line = readLine(strippingNewline: true) {
     if line.allSatisfy(\.isWhitespace) { continue }
     guard let response = server.handle(line) else { continue }

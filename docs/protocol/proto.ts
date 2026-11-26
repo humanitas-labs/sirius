@@ -127,8 +127,9 @@ export interface AgentState {
  *  - One call per connection: the helper connects, writes one request, reads one response,
  *    closes. No batches. The app executes only the first frame; any further bytes are discarded.
  *  - The app accumulates reads until "\n", bounded by LIMITS.maxRequestBytes before parsing, and
- *    finishes partial writes. A connection that sends no complete frame within
- *    LIMITS.readDeadlineSeconds is closed without a response. An incomplete frame at EOF is
+ *    finishes partial writes. A frame may take up to LIMITS.readBudgetSeconds however slowly it is
+ *    written; a chunk that is LIMITS.readDeadlineSeconds late closes the connection without a
+ *    response, and so does a frame that outlives the budget. An incomplete frame at EOF is
  *    discarded. At most LIMITS.maxConnectionsPerAgent connections are open per socket.
  *  - The whole request is validated before anything is queued.
  *  - The app checks the peer's uid (getpeereid) equals its own and closes the connection
@@ -141,7 +142,11 @@ export interface AgentState {
 export interface SiriusEnvironment {
   /** Absolute path of this agent's socket. */
   SIRIUS_SOCKET: string;
-  /** Seconds to wait for the app's response. Default 10. */
+  /**
+   * Seconds the helper waits for the app's receipt, before the transfer allowance: a frame larger
+   * than LIMITS.freeFrameBytes adds one second per LIMITS.frameBytesPerSecond, so a long response
+   * is never cut short by a deadline sized for a short one. Default 10.
+   */
   SIRIUS_TIMEOUT?: string;
 }
 
@@ -435,7 +440,18 @@ export const NOTIFY_CONTENT: ContentBlock["type"][] = ["text"];
 export const LIMITS = {
   /** Whole frame, checked before parsing. */
   maxRequestBytes: 8 * 1024 * 1024,
+  /** A chunk must arrive within this window; progress re-arms it. */
   readDeadlineSeconds: 5,
+  /**
+   * A whole frame may take this long however slowly it is written: the window plus the largest
+   * frame at the transfer rate below. Both ends scale with an agent response's length: the helper
+   * waits SIRIUS_TIMEOUT plus one second per frameBytesPerSecond beyond freeFrameBytes, and the
+   * app reads within readBudgetSeconds, re-arming the window on each chunk.
+   */
+  frameBytesPerSecond: 512 * 1024,
+  /** The first bytes are free: a toast or a spoken line waits the base alone. */
+  freeFrameBytes: 64 * 1024,
+  readBudgetSeconds: 5 + (8 * 1024 * 1024 - 64 * 1024) / (512 * 1024),
   maxConnectionsPerAgent: 8,
   maxBlocks: 32,
   /** Across all text blocks. */

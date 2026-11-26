@@ -119,9 +119,23 @@ public final class SocketServer: @unchecked Sendable {
 struct SocketServerSettings: Sendable {
     var maxRequestBytes = Limits.maxRequestBytes
     var readDeadline = TimeInterval(Limits.readDeadlineSeconds)
+    // How long a whole frame may take however slowly it is written: the
+    // window plus the largest frame at Limits' transfer rate. Chunks
+    // re-arm the window; the budget alone bounds the frame.
+    var readBudget = Limits.readBudgetSeconds
     // Not in LIMITS: how long a response may take to drain to a helper that
     // stopped reading. Same value as the read deadline.
     var writeDeadline = TimeInterval(Limits.readDeadlineSeconds)
     var maxConnections = Limits.maxConnectionsPerAgent
     var peerCheck = PeerCheck()
+}
+
+extension DispatchTime {
+    // Seconds until this instant; 0 or less once it has passed.
+    var secondsFromNow: TimeInterval {
+        let now = DispatchTime.now().uptimeNanoseconds
+        let end = uptimeNanoseconds
+        guard end > now else { return 0 }
+        return TimeInterval(end - now) / 1_000_000_000
+    }
 }
