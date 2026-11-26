@@ -56,6 +56,12 @@ public struct SpeakParams: Equatable, Sendable, Encodable {
     }
 }
 
+// last: nothing is asked for. The socket the request arrives on names the
+// agent, and the app knows that agent's last display.
+public struct LastParams: Equatable, Sendable, Encodable {
+    public init() {}
+}
+
 public struct PeerMessageParams: Equatable, Sendable, Codable {
     public let sender: String
     public let text: String
@@ -66,6 +72,7 @@ public enum Call: Equatable, Sendable {
     case display(DisplayParams)
     case notify(NotifyParams)
     case speak(SpeakParams)
+    case last(LastParams)
     case agentMessage(PeerMessageParams)
 
     public var method: Method {
@@ -73,6 +80,7 @@ public enum Call: Equatable, Sendable {
         case .display: .display
         case .notify: .notify
         case .speak: .speak
+        case .last: .last
         case .agentMessage: .agentMessage
         }
     }

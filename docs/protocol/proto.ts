@@ -187,11 +187,11 @@ export interface ErrorResponse extends Versioned {
 export type Response<R> = Result<R> | ErrorResponse;
 
 /**
- * DECIDED: three methods. Sirius defines no JSON-RPC notifications. A well-formed frame without an
+ * DECIDED: four methods. Sirius defines no JSON-RPC notifications. A well-formed frame without an
  * id is a notification by JSON-RPC's rules: the app does not execute it and sends no response. A
  * malformed one (no jsonrpc "2.0" or no string method) gets INVALID_REQUEST with id null.
  */
-export type Method = "display" | "notify" | "speak";
+export type Method = "display" | "notify" | "speak" | "last";
 
 /*
  * Outcomes (PROPOSED):
@@ -285,6 +285,28 @@ export interface SpeakResult {
   voice: string;
   /** Requested voice not installed; the default was used (PROPOSED). */
   fallback?: boolean;
+}
+
+/* ------------------------------------------------------------------------------------------ */
+/* last                                                                                       */
+/* ------------------------------------------------------------------------------------------ */
+
+/**
+ * DECIDED: show the agent's last displayed response again, exactly as it was shown: a toast, an
+ * alert where the display set one, under the agent's own mark. The last display the app accepted
+ * since it opened, seeded from the agent's log at start; notify and speak are not displays — a
+ * notification stays in Notification Center, and speech was heard.
+ * Nothing is asked for: the socket the request arrives on names the agent.
+ */
+export interface LastParams {}
+
+export type LastRequest = Request<"last", LastParams>;
+
+/**
+ * Queued again like a fresh display. NOTHING_TO_SHOW when the agent has displayed nothing yet.
+ */
+export interface LastResult {
+  delivered: true;
 }
 
 /* ------------------------------------------------------------------------------------------ */
@@ -497,6 +519,8 @@ export enum ErrorCode {
   QUEUE_FULL = -32007,
   /** App still starting. data: { method } */
   NOT_READY = -32008,
+  /** `last`, and the agent has displayed nothing yet. data: { method } */
+  NOTHING_TO_SHOW = -32009,
 }
 
 export interface ErrorData {
@@ -522,6 +546,7 @@ export interface ErrorData {
  * sirius notify [--title <t>] [--] <text>
  * sirius notify --json
  * sirius speak [--voice <name>] [--] <text>
+ * sirius last
  *
  * "--" ends options, so text starting with "-" is passed as `sirius display toast -- -1 failed`.
  * TODO(copy): whether `display "text"` without a kind stays allowed
@@ -540,7 +565,7 @@ export interface ErrorData {
 /* ------------------------------------------------------------------------------------------ */
 
 /*
- * sirius-mcp exposes tools `display`, `notify`, `speak`. Each tool's inputSchema is the JSON
+ * sirius-mcp exposes tools `display`, `notify`, `speak`, `last`. Each tool's inputSchema is the JSON
  * Schema of its Params, rooted at an object with the string-or-blocks union under
  * properties.content (Claude Code passes nested combinators through; Codex's MCP
  * conversion is non-strict and keeps unions). MCP defines content blocks for tool results, not

@@ -121,6 +121,8 @@ You never read the agent's raw output. The agent chooses one of these for each t
 
 Clicking a toast does nothing, so a stray click never loses it. Toasts are shown one at a time, in order.
 
+**To see an agent's last response again,** choose **Last response** in the menu-bar menu: it comes back as a toast under the agent's own mark, exactly as it was shown — an alert if it was an alert. It reaches back to what the agent displayed since Sirius opened. An agent can bring its own back too, with `sirius last`, so "show me that again" is one message away.
+
 **To answer a toast or an alert,** send the agent another message, spoken or typed. It remembers the conversation.
 
 Anything longer than a toast holds, the agent puts in a file and tells you where it is.

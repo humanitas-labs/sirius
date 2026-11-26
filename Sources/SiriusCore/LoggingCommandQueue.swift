@@ -10,20 +10,31 @@ import SiriusProtocol
 public final class LoggingCommandQueue: CommandQueue, @unchecked Sendable {
     private let inner: any CommandQueue
     private let report: @Sendable (String) -> Void
+    // The agents' last displays, for `last`: seeded here from each log as
+    // it is registered (the log's own recovery read found it) and recorded
+    // by the inner queue as it accepts displays.
+    private let responses: LastResponses?
     private let lock = NSLock()
     // Guarded by lock.
     private var logs: [String: AgentLog] = [:]
 
     private var turnQueues: [String: AgentTurnQueue] = [:]
 
-    public init(inner: any CommandQueue, report: @escaping @Sendable (String) -> Void = { SiriusLog.agents.error($0) }) {
+    public init(inner: any CommandQueue, report: @escaping @Sendable (String) -> Void = { SiriusLog.agents.error($0) },
+                responses: LastResponses? = nil) {
         self.inner = inner
         self.report = report
+        self.responses = responses
     }
 
     // Commands arriving on `agent`'s socket are filed in `log` from now on.
     public func register(_ log: AgentLog, for agent: String) {
         lock.withLock { logs[agent] = log }
+        if let found = log.lastDisplay {
+            responses?.record(LastResponse(agent: agent, display: found))
+        } else {
+            responses?.remove(agent: agent)
+        }
     }
 
     public func register(_ queue: AgentTurnQueue, for agent: String) {
@@ -35,6 +46,7 @@ public final class LoggingCommandQueue: CommandQueue, @unchecked Sendable {
             logs[agent] = nil
             turnQueues[agent] = nil
         }
+        responses?.remove(agent: agent)
     }
 
     public func accept(_ command: Command) async -> Result<MethodResult, RPCError> {

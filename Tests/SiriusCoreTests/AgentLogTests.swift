@@ -70,8 +70,40 @@ final class AgentLogTests: XCTestCase {
         XCTAssertTrue(contents.entries.allSatisfy { $0.version == 1 && $0.at.timeIntervalSince1970 >= 1_791_900_000 })
     }
 
-    func testConsolidationsAreFiledAndReadBack() async throws {
+    // `last`'s answer: the recovery read at every open finds the agent's
+    // last display, the latest one winning; notify and speak are not
+    // displays. (What arrives after an open is recorded by the queue that
+    // accepts it, not by the log's snapshot.)
+    func testTheLastDisplayIsFoundAtOpen() async throws {
         let log = try storage.openLog(now: fixed)
+        XCTAssertNil(log.lastDisplay, "the file had nothing displayed")
+        try await log.commandReceived(toast(1, "first"))
+        try await log.commandReceived(Command(
+            agent: "claude", id: .number(2),
+            call: .notify(NotifyParams(content: [.text(TextContent(text: "not a display"))])),
+            received: Date(timeIntervalSince1970: 1_791_900_100)))
+        try await log.commandReceived(toast(3, "second"))
+
+        // The recovery read of the same file finds the last display.
+        let reopened = try storage.openLog(now: fixed)
+        XCTAssertEqual(reopened.lastDisplay?.summary.text, "second")
+        XCTAssertEqual(reopened.lastDisplay?.summary.kind, .toast)
+        XCTAssertEqual(LastResponse(agent: "claude", display: try XCTUnwrap(reopened.lastDisplay)),
+                       LastResponse(agent: "claude", alert: false, text: "second",
+                                    at: Date(timeIntervalSince1970: 1_791_900_100)))
+    }
+
+    func testAnAlertDisplayKeepsItsAlert() async throws {
+        let log = try storage.openLog(now: fixed)
+        try await log.commandReceived(Command(
+            agent: "claude", id: .number(1),
+            call: .display(DisplayParams(kind: .toast, content: [.text(TextContent(text: "stuck"))], alert: true)),
+            received: Date(timeIntervalSince1970: 1_791_900_100)))
+        let reopened = try storage.openLog(now: fixed)
+        XCTAssertEqual(LastResponse(agent: "claude", display: try XCTUnwrap(reopened.lastDisplay)).alert, true)
+    }
+
+    func testConsolidationsAreFiledAndReadBack() async throws {        let log = try storage.openLog(now: fixed)
         try await log.consolidated(Consolidation(before: 131_204, after: 9702, milliseconds: 61_018))
         try await log.consolidated(Consolidation(before: nil, after: nil, milliseconds: 0,
                                                  outcome: .failed("claude exited")))

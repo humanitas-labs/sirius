@@ -22,7 +22,7 @@ struct Sirius: ParsableCommand {
               3  Sirius isn't running, or SIRIUS_SOCKET is not set; nothing was sent
               4  outcome unknown: it may have been accepted; not retried
             """,
-        subcommands: [Display.self, Notify.self, Speak.self]
+        subcommands: [Display.self, Notify.self, Speak.self, Last.self]
     )
 
     // Bare `sirius` is a usage error, not a request for help.
@@ -135,6 +135,22 @@ struct Speak: ParsableCommand {
             let asked = voice.map { "voice \"\($0)\"" } ?? "the default voice"
             printError("\(asked) isn't installed; used \"\(used)\"")
         }
+    }
+}
+
+struct Last: ParsableCommand {
+    static let configuration = CommandConfiguration(
+        abstract: "Show your last displayed response again.",
+        discussion: """
+            Shows again the last thing you displayed, exactly as it was shown: a toast, \
+            an alert where the display set one. notify and speak are not displays.
+
+            sirius last
+            """
+    )
+
+    func run() throws {
+        try send(.last, [:])
     }
 }
 

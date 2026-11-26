@@ -141,6 +141,24 @@ final class CLITests: XCTestCase {
         XCTAssertEqual(run.stderr, "sirius: voice \"Nobody\" isn't installed; used \"Samantha\"\n")
     }
 
+    func testLastAsksForTheAgentsOwnLastDisplay() throws {
+        let (run, request) = try accepted(["last"])
+        XCTAssertEqual(run.status, 0)
+        XCTAssertEqual(run.stdout, "")
+        XCTAssertEqual(run.stderr, "")
+        XCTAssertEqual(request["method"], .string("last"))
+        XCTAssertEqual(request["params"], .object([:]), "the socket names the agent; nothing is asked for")
+    }
+
+    func testLastWithNothingToShowIsAnError() throws {
+        let server = try FakeServer(.reply { respond($0, code: -32009, message: "Nothing has been displayed yet") })
+        let run = try run(["last"], socket: server.path)
+        server.stop()
+        XCTAssertEqual(run.status, 1)
+        XCTAssertEqual(run.stdout, "")
+        XCTAssertEqual(run.stderr, "sirius: Nothing has been displayed yet (-32009)\n")
+    }
+
     // MARK: - Usage, exit 2
 
     func testBadUsage() throws {

@@ -7,11 +7,17 @@ final class AppCommandQueue: CommandQueue {
     private let toasts: ToastPresenter
     private let notifications: NotificationPresenter
     private let speech: SpeechPresenter
+    // The last display each agent sent, seeded from the logs by the outer
+    // LoggingCommandQueue and recorded here as displays are accepted;
+    // `last` shows one again.
+    private let responses: LastResponses?
 
-    init(toasts: ToastPresenter, notifications: NotificationPresenter, speech: SpeechPresenter) {
+    init(toasts: ToastPresenter, notifications: NotificationPresenter, speech: SpeechPresenter,
+         responses: LastResponses? = nil) {
         self.toasts = toasts
         self.notifications = notifications
         self.speech = speech
+        self.responses = responses
     }
 
     func accept(_ command: Command) async -> Result<MethodResult, RPCError> {
@@ -27,14 +33,29 @@ final class AppCommandQueue: CommandQueue {
                 // The capacity check and the enqueue happen in one main-actor
                 // hop, so concurrent agents cannot overfill the queue.
                 let accepted = await toasts.enqueue(agent: command.agent, text: text, alert: alert, replace: replace)
-                return accepted
-                    ? .success(.delivered)
-                    : .failure(RPCError(.queueFull, "Queue full", data: ErrorData(method: .display)))
+                if accepted {
+                    // The user's way to ask for this again (sirius last, the
+                    // menu's Last response): what the queue took, not what it
+                    // refused.
+                    responses?.record(LastResponse(agent: command.agent, alert: alert, text: text,
+                                                    at: command.received))
+                    return .success(.delivered)
+                }
+                return .failure(RPCError(.queueFull, "Queue full", data: ErrorData(method: .display)))
             case .dialog:
                 // Validation rejects this with KIND_NOT_AVAILABLE before it gets here.
                 return .failure(RPCError(.kindNotAvailable, "Kind not available",
                                          data: ErrorData(method: .display, kind: params.kind.rawValue)))
             }
+        case .last:
+            guard let last = responses?.latest(agent: command.agent) else {
+                return .failure(RPCError(.nothingToShow, "Nothing has been displayed yet",
+                                         data: ErrorData(method: .last)))
+            }
+            let accepted = await toasts.enqueue(agent: last.agent, text: last.text, alert: last.alert)
+            return accepted
+                ? .success(.delivered)
+                : .failure(RPCError(.queueFull, "Queue full", data: ErrorData(method: .last)))
         case .notify(let params):
             // A blank title counts as none. Without one, the agent's name: its
             // id until the registry's display name lands.

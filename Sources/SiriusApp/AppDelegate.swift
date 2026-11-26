@@ -49,17 +49,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // 2026.10.12).
     private let openComposer: () -> Void
     private let composeShortcut: () -> KeyCombo
+    // Whether any agent has a last response to show again, and what shows
+    // it, for the Last response item.
+    private let lastResponse: () -> Bool
+    private let showLast: () -> Void
     private var debugItems: [NSMenuItem] = []
     private(set) var composeItem: NSMenuItem?
+    private(set) var lastItem: NSMenuItem?
 
     init(queue: CommandQueue, openOnboarding: @escaping (_ agents: Bool) -> Void,
          openSettings: @escaping () -> Void = {},
-         openComposer: @escaping () -> Void = {}, composeShortcut: @escaping () -> KeyCombo = { .compose }) {
+         openComposer: @escaping () -> Void = {}, composeShortcut: @escaping () -> KeyCombo = { .compose },
+         lastResponse: @escaping () -> Bool = { false },
+         showLast: @escaping () -> Void = {}) {
         self.queue = queue
         self.openOnboarding = openOnboarding
         self.openSettings = openSettings
         self.openComposer = openComposer
         self.composeShortcut = composeShortcut
+        self.lastResponse = lastResponse
+        self.showLast = showLast
     }
 
     // Compose, above Settings…, with the current shortcut as its hint.
@@ -93,6 +102,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let compose = makeComposeItem()
         composeItem = compose
         menu.addItem(compose)
+        // The agent's last response, on demand: a toast that has already
+        // left can be asked for again.
+        let last = NSMenuItem(title: "Last response", action: #selector(showLastResponse(_:)), keyEquivalent: "") // TODO(copy): copy
+        last.target = self
+        lastItem = last
+        menu.addItem(last)
         let setup = NSMenuItem(title: "Settings…", action: #selector(showSettings(_:)), keyEquivalent: ",")
         setup.target = self
         menu.addItem(setup)
@@ -123,6 +138,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let option = NSEvent.modifierFlags.contains(.option)
         for debug in debugItems { debug.isHidden = !option }
         if let composeItem { updateComposeItem(composeItem) }
+        lastItem?.isEnabled = lastResponse()
         debugItems.first { $0.action == #selector(toggleSlow(_:)) }?.state = SpatialMotion.timeScale > 1 ? .on : .off
     }
 
@@ -168,6 +184,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc func compose(_ item: NSMenuItem?) {
         SiriusLog.composer.info("composer: opened from the menu")
         DispatchQueue.main.async { [openComposer] in openComposer() }
+    }
+
+    // The agent's last response again, under its own mark.
+    @objc private func showLastResponse(_ item: NSMenuItem) {
+        showLast()
     }
 
     @objc private func showOnboarding(_ item: NSMenuItem) {

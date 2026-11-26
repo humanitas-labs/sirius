@@ -27,7 +27,7 @@ public enum RequestId: Hashable, Sendable, Codable {
 }
 
 public enum Method: String, CaseIterable, Sendable, Codable {
-    case display, notify, speak
+    case display, notify, speak, last
     case agentMessage = "agent_message"
 }
 
@@ -63,6 +63,8 @@ public struct ErrorCode: RawRepresentable, Hashable, Sendable, Codable {
     public static let accessDenied = ErrorCode(rawValue: -32006)
     public static let queueFull = ErrorCode(rawValue: -32007)
     public static let notReady = ErrorCode(rawValue: -32008)
+    // last, and the agent has displayed nothing yet.
+    public static let nothingToShow = ErrorCode(rawValue: -32009)
 }
 
 public struct ErrorData: Equatable, Sendable, Codable {

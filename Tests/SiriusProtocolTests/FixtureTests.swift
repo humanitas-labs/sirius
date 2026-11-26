@@ -77,6 +77,7 @@ final class FixtureTests: XCTestCase {
         case .notify(let params): try json(params)
         case .agentMessage(let params): try json(params)
         case .speak(let params): try json(params)
+        case .last(let params): try json(params)
         }
     }
 }

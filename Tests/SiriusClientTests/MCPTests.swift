@@ -119,7 +119,7 @@ final class MCPTests: XCTestCase {
     func testToolsListCarriesTheGeneratedSchemas() throws {
         let run = try run([Self.initialize, Self.initialized, #"{"jsonrpc":"2.0","id":2,"method":"tools/list"}"#])
         let tools = try XCTUnwrap(run.response(2)?["result"]?["tools"]?.array)
-        XCTAssertEqual(tools.compactMap { $0["name"]?.string }, ["display", "notify", "speak"])
+        XCTAssertEqual(tools.compactMap { $0["name"]?.string }, ["display", "notify", "speak", "last"])
 
         // The embedded schemas match the committed schema.json, so
         // scripts/gen-schema.sh was rerun after any change to it.
@@ -127,7 +127,8 @@ final class MCPTests: XCTestCase {
             .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
             .appendingPathComponent("docs/protocol/schema.json")
         let schema = try JSONValue.parse(Data(contentsOf: schemaURL))
-        let expected = ["display": "DisplayParams", "notify": "NotifyParams", "speak": "SpeakParams"]
+        let expected = ["display": "DisplayParams", "notify": "NotifyParams", "speak": "SpeakParams",
+                        "last": "LastParams"]
         for tool in tools {
             let name = try XCTUnwrap(tool["name"]?.string)
             XCTAssertEqual(tool["inputSchema"], schema["definitions"]?[expected[name]!], name)
@@ -142,9 +143,28 @@ final class MCPTests: XCTestCase {
         XCTAssertEqual(union.last?["type"], .string("array"))
         XCTAssertEqual(union.last?["items"]?["anyOf"]?.array?.count, 5)
         XCTAssertEqual(display["inputSchema"]?["required"], .array([.string("kind"), .string("content")]))
+
+        // last asks for nothing.
+        let last = try XCTUnwrap(tools.last { $0["name"]?.string == "last" })
+        XCTAssertEqual(last["inputSchema"], .object(["type": .string("object")]))
     }
 
     // MARK: - tools/call
+
+    func testLastPassesEmptyParamsThrough() throws {
+        let server = try FakeServer(.reply { respond($0, result: #"{"delivered":true}"#) })
+        let run = try run([Self.initialize, Self.initialized, call(2, "last", "{}")], socket: server.path)
+        server.stop()
+
+        let result = try XCTUnwrap(run.response(2)?["result"])
+        XCTAssertEqual(result["isError"], .bool(false))
+        XCTAssertEqual(text(result), #"{"delivered":true}"#)
+
+        XCTAssertEqual(server.connections.count, 1)
+        let frame = try XCTUnwrap(server.frames.first)
+        XCTAssertEqual(frame["method"], .string("last"))
+        XCTAssertEqual(frame["params"], .object([:]))
+    }
 
     func testCallPassesArgumentsThroughAndReturnsTheReceipt() throws {
         let server = try FakeServer(.reply { respond($0, result: #"{"delivered":true}"#) })
