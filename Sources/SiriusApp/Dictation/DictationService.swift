@@ -21,7 +21,7 @@ import SiriusCore
 // nothing. Sirius owns fn whether or not Parrot.app runs: Parrot is being
 // retired, and setup asks the user to quit it so one
 // press never gives two results. The first press with no model on disk
-// downloads whisper-base.en, with progress in the pill, and records
+// downloads whisper-small.en, with progress in the pill, and records
 // nothing; the next press dictates. In practice
 // the model is already coming: Sirius starts the download at launch, out of
 // sight, as Parrot starts its own (prepareModel), and a press before it is
@@ -66,7 +66,7 @@ final class DictationService {
     static let grantPoll: TimeInterval = 2
 
     private let delivery: SiriusDelivery
-    private let model: DictationModel
+    private var model: DictationModel
     private let agents: DictationAgents
     private let composer: ComposerController
     // The Sirius mark as the pill opens (the Debug preview's).
@@ -413,6 +413,26 @@ final class DictationService {
     func prepareModel() {
         guard loading == nil else { return }
         load(downloading: !model.isOnDisk, pill: false)
+    }
+
+    // The speech model chosen in Settings → Dictation, applied at once:
+    // the next hold dictates with it, and its download starts now,
+    // silently as at launch. A recording in flight ends with the model it
+    // started with; the press after it builds on the new one.
+    func applyModel(_ id: String) {
+        guard id != model.model.id else { return }
+        let fresh = DictationModel(defaults: defaults)
+        guard fresh.model.id == id else { return }  // unknown: DictationModel kept the old
+        model = fresh
+        // The running load belongs to the old model; its completion guard
+        // (loading == task) lets it end quietly, and the next press builds
+        // a new controller on the new one.
+        loading = nil
+        controller = nil
+        downloading = false
+        pillShowsDownload = false
+        SiriusLog.dictation.info("dictation: model set to \(id)")
+        prepareModel()
     }
 
     // Whether a load from disk is running: the launch cue waits for it, but

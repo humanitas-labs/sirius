@@ -13,8 +13,21 @@ Last updated: `2026.11.22`. Built; this records the design decisions. The plan a
 - **No name, the agent selector's agent.** The agent selected in the composer, remembered across launches (`composer.last_agent`), is the default until switched. A fixed default agent is the fallback if this keeps misrouting.
 - **`/` during a hold steps the agent selector** (2026.11.22). Press `/` while holding `fn` and the selection moves to the next agent, exactly as ⌘/ does in the composer: one selection, stored, so the composer and the next hold start on it. The pill goes back to its opening on the new agent's logo for 0.6 s, then to the bars; recording does not stop. A spoken name still wins. The `/` is dropped before the app in front sees it, by a second, active event tap that is enabled only while an agent hold records; a paste hold types its `/`. With the composer open the composer's own logo shows the change. Where secure input is on (a password field), macOS gives the tap no keys and `/` does nothing.
 - **With the composer open, `fn` dictates into the composer** rather than sending, so attachments and edits can follow.
-- **`whisper-base.en`** (145 MB) downloads silently at launch, as Parrot does.
+- **whisper-small.en is the default** (488 MB), and the model is a choice in Settings… → Dictation, applied at once. The reasoning is below, under Models.
 - **A standalone pill where Parrot's sits, in Parrot's style.** The pill's exit has since been reworked in Sirius.
+
+## Models
+
+The engine is ParrotCore's WhisperKitTranscriber, and a model is one entry in its `ModelRegistry`. Sirius's default is `whisper-small.en` (488 MB, English): clearly fewer misreads than `whisper-base.en` at three times the download — each step up the Whisper family roughly halves the error rate — and still a fraction of a second for a held sentence on Apple Silicon. Until 2026.11.22 the default was `whisper-base.en` (145 MB); it was the launch download's size that spoke for it, and the error rate was the complaint dictation got.
+
+The picker in Settings… → Dictation offers the whole registry, each with its languages and size, and a choice applies at once (`DictationService.applyModel`): the next hold dictates with it, its download running silently if the weights are not on disk, showing in the pill on the next press. The choice is Sirius's own UserDefaults key (`dictation.model`), not Parrot's settings.json, and the weights stay in Parrot's folder, shared.
+
+Candidates considered for the default, and where they stand:
+
+- **whisper-small.en** — the default: the accuracy-per-download that fits a key you hold to talk.
+- **whisper-large-v3-turbo** (1.6 GB, multilingual) — the registry's most accurate, offered in the picker for those who want it; its encoder is heavy enough to slow a held sentence on older Apple Silicon, which is why it is a choice rather than the default.
+- **NVIDIA Parakeet** (TDT v2, "ultra" class) — tops today's English benchmarks and is what we would ship next, but it is not a WhisperKit model: Argmax serves it through their SDK and the parakeetkit-pro weights, not the whisperkit-coreml pipeline ParrotCore loads from. Adopting it means a ParrotCore engine change (transcriber plus registry), tracked there; Sirius's picker takes it the day ParrotCore lists it.
+- **whisper-base.en** — kept in the registry for Parrot users who already have its weights on disk; still selectable.
 
 ## Engine
 

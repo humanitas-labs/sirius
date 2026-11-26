@@ -154,7 +154,7 @@ MainActor.assumeIsolated {
     )
     composing.isComposing = { dictation.isBusy || composer.isOpen }
     dictation.start()
-    // whisper-base.en, downloaded and loaded now, out of sight, as Parrot
+    // whisper-small.en, downloaded and loaded now, out of sight, as Parrot
     // does at launch; a press before it is in shows "Preparing speech…".
     dictation.prepareModel()
     launchCue.attach(dictation)
@@ -168,9 +168,11 @@ MainActor.assumeIsolated {
     let onboarding = OnboardingWindow(registry: registry, shortcuts: shortcuts,
                                       onSave: { Task.detached { await host.reload() } })
     // "Settings…": the Settings window (SettingsWindow), which writes each
-    // agent's change at once and reloads the host.
+    // agent's change at once and reloads the host, and passes a dictation
+    // model choice to the service that applies it.
     let settings = SettingsWindow(registry: registry, shortcuts: shortcuts,
-                                  onSave: { Task.detached { await host.reload() } })
+                                   onSave: { Task.detached { await host.reload() } },
+                                   onDictationModel: { dictation.applyModel($0) })
     let onboardingShown = onboarding.showIfNeeded()
     // The pill on the sparkle while Sirius wakes, once the run loop is up;
     // not over the onboarding's own opening.

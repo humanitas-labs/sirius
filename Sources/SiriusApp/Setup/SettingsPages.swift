@@ -399,17 +399,24 @@ private struct AgentDetail: View {
     }
 }
 
-// The speech model dictation uses, shown with its size; DictationModel reads
-// it at launch, so it is not changed here.
+// The speech model dictation uses, chosen from ParrotCore's registry; a
+// choice is written through (UserDefaults' dictation.model) and applied at
+// once (DictationService.applyModel), so the next hold dictates with it.
+// Its download, when the weights are not on disk, starts silently and
+// shows in the pill on the next press.
 private struct DictationPane: View {
     @ObservedObject var model: SettingsModel
 
     var body: some View {
         SettingsGroup("Dictation") { // TODO(copy): copy
             PillRow("Model", note: model.dictationNote) { // TODO(copy): copy
-                Text(model.dictation.displayName)
-                    .foregroundStyle(.secondary)
-                    .padding(.horizontal, 14)
+                PillMenu(title: model.dictation.displayName) {
+                    ForEach(model.dictationOptions, id: \.id) { option in
+                        Button(SettingsModel.dictationOptionLabel(option)) {
+                            model.selectDictation(model: option)
+                        }
+                    }
+                }
             }
         }
     }
