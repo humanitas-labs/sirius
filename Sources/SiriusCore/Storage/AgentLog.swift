@@ -176,6 +176,11 @@ public actor AgentLog {
                                 outcome: AgentLogEntry.TurnOutcome(consolidation.outcome)))
     }
 
+    public func rotated(_ rotation: Rotation) throws {
+        try write(.rotated(from: rotation.from, to: rotation.to, milliseconds: rotation.milliseconds,
+                           outcome: AgentLogEntry.TurnOutcome(rotation.outcome)))
+    }
+
     public func turnEnded(message: String, _ end: TurnEnd) throws {
         try turnEnded(message: message, session: end.session, outcome: AgentLogEntry.TurnOutcome(end.outcome),
                       model: end.model)
@@ -282,7 +287,7 @@ struct AgentLogState: Sendable {
             status[message] = .finished
             if current == message { current = nil }
             joined.removeAll { $0 == message }
-        case .requeued, .command, .agentStarted, .agentTurn, .consolidated:
+        case .requeued, .command, .agentStarted, .agentTurn, .consolidated, .rotated:
             // A re-queued message stays pending until its turn starts.
             break
         }

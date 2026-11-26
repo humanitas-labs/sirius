@@ -14,12 +14,14 @@ final class AgentTurnQueueTests: XCTestCase {
         try? FileManager.default.removeItem(at: base)
     }
 
-    private func makeQueue(_ adapter: FakeAdapter, consolidation: ConsolidationPolicy? = nil) throws
+    private func makeQueue(_ adapter: FakeAdapter, consolidation: ConsolidationPolicy? = nil,
+                           composing: @escaping @Sendable () async -> Bool = { false }) throws
         -> (AgentTurnQueue, AgentStorage, AgentLog) {
         let storage = try AgentStorage(agent: "dev", baseDirectory: base)
         try storage.prepare()
         let log = try storage.openLog()
-        return (AgentTurnQueue(adapter: adapter, log: log, storage: storage, consolidation: consolidation),
+        return (AgentTurnQueue(adapter: adapter, log: log, storage: storage, consolidation: consolidation,
+                               composing: composing),
                 storage, log)
     }
 
@@ -433,6 +435,63 @@ extension AgentTurnQueueTests {
         XCTAssertEqual(adapter.consolidations, 1)
     }
 
+    // Nothing is consolidated while the user is dictating or has the
+    // composer open; it is tried again shortly, and runs once they are done.
+    func testConsolidationWaitsWhileTheUserIsComposing() async throws {
+        let adapter = FakeAdapter(context: 150_000)
+        let composing = Flag(true)
+        let policy = ConsolidationPolicy(idle: .milliseconds(50), threshold: 100_000,
+                                         composingRetry: .milliseconds(50))
+        let (queue, _, _) = try makeQueue(adapter, consolidation: policy, composing: { composing.value })
+        try await queue.send(message(1))
+        try await adapter.waitForDeliveries(1)
+        try await Task.sleep(nanoseconds: 300_000_000)
+        XCTAssertEqual(adapter.consolidations, 0, "put off while composing")
+        composing.value = false
+        try await Task.sleep(nanoseconds: 300_000_000)
+        XCTAssertEqual(adapter.consolidations, 1, "run once the user is done")
+    }
+
+    // A session whose record is old or large is rotated when idle, not
+    // consolidated: state.json takes the new session and the log says so.
+    func testAnOldSessionIsRotatedWhenIdle() async throws {
+        let adapter = FakeAdapter(turnSession: "old", context: 40_000,
+                                  record: SessionRecord(age: .seconds(8 * 24 * 60 * 60), bytes: 1000),
+                                  rotatesTo: "new")
+        let (queue, storage, _) = try makeQueue(adapter, consolidation: Self.quick)
+        try await queue.send(message(1))
+        try await adapter.waitForDeliveries(1)
+        try await Task.sleep(nanoseconds: 300_000_000)
+        XCTAssertEqual(adapter.rotations, 1, "once: the new session is young")
+        XCTAssertEqual(adapter.consolidations, 0)
+        XCTAssertEqual(try storage.readState().session, "new")
+        let events = try AgentLog.read(storage.logURL).entries.map(\.event)
+        XCTAssertTrue(events.contains(.rotated(from: "old", to: "new", milliseconds: 5, outcome: .completed)),
+                      "\(events)")
+    }
+
+    func testALargeSessionIsRotatedAndAYoungSmallOneIsNot() {
+        let policy = Self.quick
+        XCTAssertTrue(policy.rotates(SessionRecord(age: .seconds(60), bytes: 250_000_000)))
+        XCTAssertTrue(policy.rotates(SessionRecord(age: .seconds(7 * 24 * 60 * 60), bytes: 0)))
+        XCTAssertFalse(policy.rotates(SessionRecord(age: .seconds(6 * 24 * 60 * 60), bytes: 150_000_000)))
+    }
+
+    // A rotation that does not come about leaves the session as it was and
+    // is not tried again; the agent is consolidated as before.
+    func testAFailedRotationKeepsTheSessionAndIsNotRetried() async throws {
+        let adapter = FakeAdapter(turnSession: "old", context: 150_000,
+                                  record: SessionRecord(age: .seconds(30 * 24 * 60 * 60), bytes: 1000),
+                                  rotatesTo: nil)
+        let (queue, storage, _) = try makeQueue(adapter, consolidation: Self.quick)
+        try await queue.send(message(1))
+        try await adapter.waitForDeliveries(1)
+        try await Task.sleep(nanoseconds: 400_000_000)
+        XCTAssertEqual(adapter.rotations, 1)
+        XCTAssertEqual(try storage.readState().session, "old")
+        XCTAssertEqual(adapter.consolidations, 1, "consolidated at the next idle time instead")
+    }
+
     func testThePolicyComesFromTheRegistration() {
         func registration(idle: Int?, threshold: Int?) -> AgentRegistration {
             AgentRegistration(agent: "a", name: "A", harness: .claudeCode, executable: "", root: "/",
@@ -501,9 +560,19 @@ final class FakeAdapter: Adapter, @unchecked Sendable {
     var consolidations: Int { lock.withLock { _consolidations } }
     var consolidating: Bool { lock.withLock { _consolidating } }
 
+    // The session's record, and the session a rotation moves to (nil: it
+    // fails). A rotated session is young.
+    private var record: SessionRecord?
+    let rotatesTo: String?
+    private var _rotations = 0
+    var rotations: Int { lock.withLock { _rotations } }
+
     init(turnDelay: Double = 0, startDelay: Double = 0, startSession: String? = nil, startModel: String? = nil,
          turnSession: String? = nil, throwOn: Set<String> = [], outdatedOn: Set<String> = [],
-         steers: Bool = false, context: Int? = nil, consolidationDelay: Double = 0) {
+         steers: Bool = false, context: Int? = nil, consolidationDelay: Double = 0,
+         record: SessionRecord? = nil, rotatesTo: String? = nil) {
+        self.record = record
+        self.rotatesTo = rotatesTo
         self.context = context
         self.consolidationDelay = consolidationDelay
         self.outdatedOn = outdatedOn
@@ -539,7 +608,8 @@ final class FakeAdapter: Adapter, @unchecked Sendable {
         if startDelay > 0 { try? await Task.sleep(nanoseconds: UInt64(startDelay * 1_000_000_000)) }
         sink.yield(.usage(contextTokens: context))
         return SessionInfo(session: startSession, model: startModel,
-                           capabilities: AgentCapabilities(steer: steers, compact: true, agentTurns: true, usage: true))
+                           capabilities: AgentCapabilities(steer: steers, compact: true, agentTurns: true, usage: true,
+                                                           rotate: lock.withLock { record != nil }))
     }
 
     func prompt(_ message: Message) async throws -> TurnEnd {
@@ -588,6 +658,19 @@ final class FakeAdapter: Adapter, @unchecked Sendable {
         return Consolidation(before: before, after: 9000, milliseconds: 5)
     }
 
+    func sessionRecord() async -> SessionRecord? { lock.withLock { record } }
+
+    func rotate() async throws -> Rotation? {
+        let from = turnSession
+        lock.withLock { _rotations += 1 }
+        guard let rotatesTo else {
+            return Rotation(from: from, to: nil, milliseconds: 5, outcome: .failed("no brief"))
+        }
+        lock.withLock { record = SessionRecord(age: .zero, bytes: 0) }
+        turnSession = rotatesTo
+        return Rotation(from: from, to: rotatesTo, milliseconds: 5)
+    }
+
     func waitForDeliveries(_ count: Int) async throws {
         for _ in 0..<500 where delivered.count < count { try await Task.sleep(nanoseconds: 10_000_000) }
         XCTAssertGreaterThanOrEqual(delivered.count, count)
@@ -595,6 +678,16 @@ final class FakeAdapter: Adapter, @unchecked Sendable {
 
     func waitForStarted(_ count: Int) async throws {
         for _ in 0..<500 where lock.withLock({ _startedTurns }) < count { try await Task.sleep(nanoseconds: 10_000_000) }
+    }
+}
+
+private final class Flag: @unchecked Sendable {
+    private let lock = NSLock()
+    private var _value: Bool
+    init(_ value: Bool) { _value = value }
+    var value: Bool {
+        get { lock.withLock { _value } }
+        set { lock.withLock { _value = newValue } }
     }
 }
 

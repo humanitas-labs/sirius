@@ -55,6 +55,9 @@ public struct AgentLogEntry: Equatable, Sendable {
         // Sirius shrank the agent's context while it was idle (Consolidation):
         // tokens before and after as far as the harness said, and how long.
         case consolidated(before: Int?, after: Int?, milliseconds: Int, outcome: TurnOutcome)
+        // Sirius moved the agent to a fresh session while it was idle
+        // (Rotation): the session left, the one that took over, how long.
+        case rotated(from: String?, to: String?, milliseconds: Int, outcome: TurnOutcome)
         // A request from the agent, filed against its current message or the
         // most recent one; nil only when no turn has ever started.
         case command(message: String?, request: RequestId, method: SiriusProtocol.Method, params: CommandSummary)
@@ -75,6 +78,7 @@ public struct AgentLogEntry: Equatable, Sendable {
             case .turnEnded: "turn_ended"
             case .agentTurn: "agent_turn"
             case .consolidated: "consolidated"
+            case .rotated: "rotated"
             case .command: "command"
             case .interrupted: "interrupted"
             case .requeued: "requeued"
@@ -86,7 +90,7 @@ public struct AgentLogEntry: Equatable, Sendable {
             case .message(let id, _, _, _, _, _): id
             case .turnStarted(let message), .turnEnded(let message, _, _, _), .interrupted(let message, _),
                  .requeued(let message), .turnJoined(let message, _): message
-            case .agentStarted, .agentTurn, .consolidated: nil
+            case .agentStarted, .agentTurn, .consolidated, .rotated: nil
             case .command(let message, _, _, _): message
             }
         }
@@ -181,7 +185,7 @@ public struct CommandSummary: Equatable, Sendable, Codable {
 extension AgentLogEntry: Codable {
     enum CodingKeys: String, CodingKey {
         case v, at, event, message, text, attachments, session, outcome, reason, request, method, params
-        case resumed, model, effort, ms, turn, before, after, sender, context
+        case resumed, model, effort, ms, turn, before, after, sender, context, from, to
     }
 
     struct UnknownEvent: Error {}
@@ -234,6 +238,11 @@ extension AgentLogEntry: Codable {
                                   after: try container.decodeIfPresent(Int.self, forKey: .after),
                                   milliseconds: try container.decodeIfPresent(Int.self, forKey: .ms) ?? 0,
                                   outcome: try Self.decodeOutcome(container))
+        case "rotated":
+            event = .rotated(from: try container.decodeIfPresent(String.self, forKey: .from),
+                             to: try container.decodeIfPresent(String.self, forKey: .to),
+                             milliseconds: try container.decodeIfPresent(Int.self, forKey: .ms) ?? 0,
+                             outcome: try Self.decodeOutcome(container))
         case "command":
             event = .command(message: try container.decodeIfPresent(String.self, forKey: .message),
                              request: try container.decode(RequestId.self, forKey: .request),
@@ -308,6 +317,11 @@ extension AgentLogEntry: Codable {
         case .consolidated(let before, let after, let milliseconds, let outcome):
             try container.encodeIfPresent(before, forKey: .before)
             try container.encodeIfPresent(after, forKey: .after)
+            try container.encode(milliseconds, forKey: .ms)
+            try Self.encode(outcome, into: &container)
+        case .rotated(let from, let to, let milliseconds, let outcome):
+            try container.encodeIfPresent(from, forKey: .from)
+            try container.encodeIfPresent(to, forKey: .to)
             try container.encode(milliseconds, forKey: .ms)
             try Self.encode(outcome, into: &container)
         case .command(let message, let request, let method, let params):

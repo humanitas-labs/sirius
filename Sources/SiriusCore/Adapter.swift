@@ -33,6 +33,18 @@ public protocol Adapter: AnyObject, Sendable {
     // Returns when done; nil when the harness can't now (a turn of its own
     // is running). Throwing means the process is gone, as for prompt.
     func compact() async throws -> Consolidation?
+    // How old and how large the record the harness keeps of this session is
+    // (Claude's transcript file); nil when it keeps none or cannot say. The
+    // queue reads it to decide when a session is due to be rotated.
+    func sessionRecord() async -> SessionRecord?
+    // Continue in a fresh session, between turns: the agent writes a handoff
+    // brief, the session is closed, a new one is opened and reads the brief.
+    // Called only when open declared `rotate`. Returns the new session when
+    // done; nil when the harness can't now (a turn of its own is running);
+    // .failed, with the old session still open, when the brief or the new
+    // session did not come about. Throwing means the process is gone, as
+    // for prompt.
+    func rotate() async throws -> Rotation?
     // End the session and the process. Safe to call when it is not running.
     // A pending prompt does not outlive it: it throws CancellationError
     // before close returns. ACP's session/cancel plus session/close.
@@ -41,6 +53,12 @@ public protocol Adapter: AnyObject, Sendable {
     // life, across opens: context usage and turns the agent started by
     // itself. ACP's session/update, filtered. One consumer.
     var updates: AsyncStream<SessionUpdate> { get }
+}
+
+// Harnesses that keep no record and cannot rotate say so by default.
+public extension Adapter {
+    func sessionRecord() async -> SessionRecord? { nil }
+    func rotate() async throws -> Rotation? { nil }
 }
 
 // What open asks for. Launch configuration (root, model, instructions,
@@ -87,12 +105,16 @@ public struct AgentCapabilities: Equatable, Sendable {
     public var agentTurns: Bool
     // Reports its context size (.usage).
     public var usage: Bool
+    // Continues in a fresh session when Sirius asks (rotate).
+    public var rotate: Bool
 
-    public init(steer: Bool = false, compact: Bool = false, agentTurns: Bool = false, usage: Bool = false) {
+    public init(steer: Bool = false, compact: Bool = false, agentTurns: Bool = false, usage: Bool = false,
+                rotate: Bool = false) {
         self.steer = steer
         self.compact = compact
         self.agentTurns = agentTurns
         self.usage = usage
+        self.rotate = rotate
     }
 }
 
@@ -133,18 +155,68 @@ public struct Consolidation: Equatable, Sendable {
     }
 }
 
+// The harness's own record of a session: how long ago it began and its size
+// on disk.
+public struct SessionRecord: Equatable, Sendable {
+    public var age: Duration
+    public var bytes: Int
+
+    public init(age: Duration, bytes: Int) {
+        self.age = age
+        self.bytes = bytes
+    }
+}
+
+// What a rotation did: the session left and the one that took over, and how
+// long it took. On .failed the agent is still in `from`.
+public struct Rotation: Equatable, Sendable {
+    public var from: String?
+    public var to: String?
+    public var milliseconds: Int
+    public var outcome: TurnEnd.Outcome
+
+    public init(from: String?, to: String?, milliseconds: Int, outcome: TurnEnd.Outcome = .completed) {
+        self.from = from
+        self.to = to
+        self.milliseconds = milliseconds
+        self.outcome = outcome
+    }
+}
+
 // When the queue consolidates an agent: after `idle` with no turn, once its
-// context is at least `threshold` tokens.
+// context is at least `threshold` tokens. At the same moment a session whose
+// record is older than `rotateAge` or larger than `rotateBytes` is rotated
+// instead (.plan/session-rotation.md): one session resumed for weeks grew a
+// 700 MB transcript that the harness's own cleanup never removes. Neither
+// step starts while the user is composing; it is tried again after
+// `composingRetry`.
 public struct ConsolidationPolicy: Equatable, Sendable {
     public static let defaultIdleMinutes = 15
     public static let defaultThreshold = 100_000
+    public static let defaultRotateAge: Duration = .seconds(7 * 24 * 60 * 60)
+    public static let defaultRotateBytes = 200_000_000
 
     public var idle: Duration
     public var threshold: Int
+    // Nil turns that trigger off.
+    public var rotateAge: Duration?
+    public var rotateBytes: Int?
+    public var composingRetry: Duration
 
-    public init(idle: Duration, threshold: Int) {
+    public init(idle: Duration, threshold: Int, rotateAge: Duration? = ConsolidationPolicy.defaultRotateAge,
+                rotateBytes: Int? = ConsolidationPolicy.defaultRotateBytes,
+                composingRetry: Duration = .seconds(60)) {
         self.idle = idle
         self.threshold = threshold
+        self.rotateAge = rotateAge
+        self.rotateBytes = rotateBytes
+        self.composingRetry = composingRetry
+    }
+
+    public func rotates(_ record: SessionRecord) -> Bool {
+        if let rotateAge, record.age >= rotateAge { return true }
+        if let rotateBytes, record.bytes >= rotateBytes { return true }
+        return false
     }
 
     // The registration's consolidate_after_idle and consolidate_threshold,

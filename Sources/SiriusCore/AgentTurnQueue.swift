@@ -17,7 +17,11 @@ import SiriusProtocol
 // starts an idle timer that a send cancels. When it runs out with nothing
 // running or queued and the context at the threshold, the queue consolidates
 // the agent as a step of its own: a message sent meanwhile waits behind it
-// rather than joining it, and goes once it is done.
+// rather than joining it, and goes once it is done. A session whose record
+// has grown old or large is rotated into a fresh one at that moment instead
+// (ConsolidationPolicy). Neither starts while the user is composing: a
+// message on its way would wait behind it (2026.11.25: a 59 s dictation
+// landed one second after a 35 s consolidation began).
 public actor AgentTurnQueue {
     private let adapter: any Adapter
     private let log: AgentLog
@@ -28,6 +32,11 @@ public actor AgentTurnQueue {
     // Told instead, with what to say, when the failure is a UserFacingError.
     private let onUserError: @Sendable (String) -> Void
     private let consolidation: ConsolidationPolicy?
+    // Whether the user is dictating or has the composer open.
+    private let composing: @Sendable () async -> Bool
+    // A rotation did not come about; not tried again until the next launch,
+    // so a harness that cannot do it is not asked every idle period.
+    private var rotationFailed = false
     // For what went wrong that nobody is told of: a log line or the state
     // that could not be written.
     private let report: @Sendable (String) -> Void
@@ -58,11 +67,13 @@ public actor AgentTurnQueue {
 
     public init(adapter: any Adapter, log: AgentLog, storage: AgentStorage,
                 consolidation: ConsolidationPolicy? = nil,
+                composing: @escaping @Sendable () async -> Bool = { false },
                 onFailure: @escaping @Sendable (String) -> Void = { _ in },
                 onUserError: @escaping @Sendable (String) -> Void = { _ in },
                 report: @escaping @Sendable (String) -> Void = { _ in }) {
         self.report = report
         self.consolidation = consolidation
+        self.composing = composing
         self.adapter = adapter
         self.log = log
         self.storage = storage
@@ -173,21 +184,54 @@ public actor AgentTurnQueue {
 
     // MARK: Consolidation
 
-    private func armIdleTimer() {
+    private func armIdleTimer(after wait: Duration? = nil) {
         idleTimer?.cancel()
         guard let policy = consolidation, !stopped else { return }
         idleTimer = Task { [weak self] in
-            try? await Task.sleep(for: policy.idle)
+            try? await Task.sleep(for: wait ?? policy.idle)
             guard !Task.isCancelled else { return }
             await self?.consolidateIfIdle(policy)
         }
     }
 
     private func consolidateIfIdle(_ policy: ConsolidationPolicy) async {
-        guard isIdle, capabilities.compact, let tokens = contextTokens, tokens >= policy.threshold else { return }
+        guard isIdle else { return }
+        let rotates = capabilities.rotate && !rotationFailed
+        let compacts = capabilities.compact && (contextTokens ?? 0) >= policy.threshold
+        guard rotates || compacts else { return }
+        if await composing() {
+            // Still idle as far as turns go: look again shortly.
+            if isIdle { armIdleTimer(after: policy.composingRetry) }
+            return
+        }
+        var rotate = false
+        if rotates, let record = await adapter.sessionRecord() { rotate = policy.rotates(record) }
+        // A message may have come during the awaits above.
+        guard isIdle, rotate || compacts else { return }
         pump = Task {
-            await self.consolidate()
+            if rotate { await self.rotate() } else { await self.consolidate() }
             await self.drain()
+        }
+    }
+
+    private func rotate() async {
+        do {
+            guard let done = try await adapter.rotate() else { return }
+            if case .completed = done.outcome, let session = done.to {
+                persist(session)
+            } else {
+                rotationFailed = true
+            }
+            await filed { try await log.rotated(done) }
+        } catch is CancellationError {
+        } catch {
+            // The agent is gone: restart it, in the session state.json still
+            // names, before the next turn.
+            started = false
+            rotationFailed = true
+            await adapter.close()
+            let failed = Rotation(from: nil, to: nil, milliseconds: 0, outcome: .failed("\(error)"))
+            await filed { try await log.rotated(failed) }
         }
     }
 

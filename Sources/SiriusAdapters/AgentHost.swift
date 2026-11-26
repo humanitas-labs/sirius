@@ -50,6 +50,9 @@ public actor AgentHost {
     // A toast that stays until clicked, under the agent's mark: a failure
     // the user can act on (UserFacingError), e.g. a Claude Code too old to run.
     private let problem: @Sendable (_ agent: String, _ text: String) -> Void
+    // Whether the user is dictating or has the composer open: the queues
+    // put off consolidating and rotating while they are (AgentTurnQueue).
+    private let composing: @Sendable () async -> Bool
 
     private struct Hosted {
         var entry: RegisteredAgent
@@ -82,7 +85,8 @@ public actor AgentHost {
                 report: @escaping @Sendable (String) -> Void = { SiriusLog.agents.info($0) },
                 alert: @escaping @Sendable (_ title: String, _ body: String) -> Void = { _, _ in },
                 notice: @escaping @Sendable (_ agent: String, _ text: String) -> Void = { _, _ in },
-                problem: @escaping @Sendable (_ agent: String, _ text: String) -> Void = { _, _ in }) {
+                problem: @escaping @Sendable (_ agent: String, _ text: String) -> Void = { _, _ in },
+                composing: @escaping @Sendable () async -> Bool = { false }) {
         self.registry = registry
         self.server = server
         self.commands = commands
@@ -94,6 +98,7 @@ public actor AgentHost {
         self.alert = alert
         self.notice = notice
         self.problem = problem
+        self.composing = composing
     }
 
     // MARK: Locations
@@ -378,6 +383,7 @@ public actor AgentHost {
             let alert = alert, name = registration.name, problem = problem, report = report
             let queue = AgentTurnQueue(adapter: makeAdapter(context), log: log, storage: storage,
                                        consolidation: ConsolidationPolicy(registration: registration),
+                                       composing: composing,
                                        onFailure: { alert(name, Self.alertText(failed: $0)) },
                                        onUserError: {
                                            report("Sirius: \(id): \($0)")

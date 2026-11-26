@@ -71,12 +71,17 @@ MainActor.assumeIsolated {
     // Sirius's own notices about an agent (e.g. "Resent 3 messages" after a
     // restart, #1) are toasts under its mark. A failure the user can act on
     // (e.g. "Claude Code is too old for Sirius") is a toast that stays until clicked.
+    // Whether the user is dictating or has the composer open, once those
+    // exist (below): the agents are not consolidated meanwhile.
+    let composing = ComposingProbe()
     let host = AgentHost(server: server, commands: commands, alert: { title, body in
         Task { @MainActor in _ = await notifications.post(title: title, body: body) }
     }, notice: { agent, text in
         Task { @MainActor in _ = toasts.enqueue(agent: agent, text: text, alert: false) }
     }, problem: { agent, text in
         Task { @MainActor in _ = toasts.enqueue(agent: agent, text: text, alert: true) }
+    }, composing: {
+        await MainActor.run { composing.isComposing() }
     })
     // With an agent registered, the agents start now; otherwise once the
     // onboarding saves one (below).
@@ -147,6 +152,7 @@ MainActor.assumeIsolated {
         agents: dictationAgents,
         composer: composer
     )
+    composing.isComposing = { dictation.isBusy || composer.isOpen }
     dictation.start()
     // whisper-base.en, downloaded and loaded now, out of sight, as Parrot
     // does at launch; a press before it is in shows "Preparing speech…".

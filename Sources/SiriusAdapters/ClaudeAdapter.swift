@@ -43,6 +43,9 @@ public actor ClaudeAdapter: Adapter {
     private let named: Bool
     private let observer: Observer?
     private let environment: [String: String]
+    // Where the agent writes its handoff briefs (rotate), kept so a lost
+    // thread can be traced.
+    private let handoffDirectory: URL
 
     private var running: Running?
     private var generation = 0
@@ -100,6 +103,7 @@ public actor ClaudeAdapter: Adapter {
     public init(registration: AgentRegistration, socketPath: String, helpersDirectory: URL,
                 systemPrompt: String? = nil, named: Bool = true,
                 environment: [String: String] = ProcessInfo.processInfo.environment,
+                handoffDirectory: URL? = nil,
                 observer: Observer? = nil) {
         self.registration = registration
         self.socketPath = socketPath
@@ -107,13 +111,17 @@ public actor ClaudeAdapter: Adapter {
         self.systemPrompt = systemPrompt
         self.named = named
         self.environment = environment
+        self.handoffDirectory = handoffDirectory
+            ?? AgentStorage.defaultBaseDirectory.appendingPathComponent(registration.agent, isDirectory: true)
+                .appendingPathComponent("handoffs", isDirectory: true)
         self.observer = observer
         (updates, updateSink) = makeUpdateStream()
     }
 
     // Everything but open, prompt and close: Claude steers, compacts with
     // /compact, starts turns by itself, and reports its context.
-    static let capabilities = AgentCapabilities(steer: true, compact: true, agentTurns: true, usage: true)
+    static let capabilities = AgentCapabilities(steer: true, compact: true, agentTurns: true, usage: true,
+                                                rotate: true)
 
     // The name the session goes by for other Claude sessions: ListAgents
     // rows, SendMessage addresses and the `from` of cross-session messages.
@@ -311,6 +319,95 @@ public actor ClaudeAdapter: Adapter {
             + elapsed.components.attoseconds / 1_000_000_000_000_000)
         return Consolidation(before: compaction?.before ?? before, after: compaction?.after,
                              milliseconds: milliseconds, outcome: end.outcome)
+    }
+
+    // MARK: Rotation (.plan/session-rotation.md)
+
+    // Claude's transcript of the session: <config>/projects/<root, mangled>/
+    // <session>.jsonl. Found by its name, so the mangling stays Claude's.
+    static func transcript(session: String, environment: [String: String]) -> URL? {
+        let config = environment["CLAUDE_CONFIG_DIR"].map { URL(fileURLWithPath: $0, isDirectory: true) }
+            ?? URL(fileURLWithPath: environment["HOME"] ?? NSHomeDirectory(), isDirectory: true)
+                .appendingPathComponent(".claude", isDirectory: true)
+        let projects = config.appendingPathComponent("projects", isDirectory: true)
+        let folders = (try? FileManager.default.contentsOfDirectory(at: projects, includingPropertiesForKeys: nil)) ?? []
+        return folders.lazy.map { $0.appendingPathComponent(session + ".jsonl") }
+            .first { FileManager.default.fileExists(atPath: $0.path) }
+    }
+
+    public func sessionRecord() async -> SessionRecord? {
+        guard let id = session ?? resumed,
+              let url = Self.transcript(session: id, environment: environment),
+              let attributes = try? FileManager.default.attributesOfItem(atPath: url.path),
+              let created = attributes[.creationDate] as? Date,
+              let size = attributes[.size] as? NSNumber else { return nil }
+        return SessionRecord(age: .seconds(max(0, Date().timeIntervalSince(created))), bytes: size.intValue)
+    }
+
+    // Both lines are Sirius's, not the user's: unwrapped, so the agent's
+    // rule to answer every user message through Sirius does not apply, and
+    // they say so.
+    static let housekeeping = "Sirius housekeeping, not a message from the user: do not send a toast, a notification or speech about it."
+
+    static func handoffRequest(path: String) -> String {
+        """
+        \(housekeeping) This session has grown long, and Sirius is about to continue it in a fresh session that starts with none of this conversation. Write a handoff brief for that session to the file \(path) (Markdown; create the folder if it is missing). Put in it:
+        - Standing rules and preferences the user stated, verbatim.
+        - The work in progress and its next step, with where it lives: file paths, branches, commits, task ids, URLs.
+        - Anything waiting on the user: questions you asked, approvals you need.
+        - The user's last several messages and what you told them through Sirius, a line each, in order, the last few verbatim.
+        - Other sessions you were exchanging messages with, each with its name and what it was doing for you or you for it.
+        - Background agents and processes you started, each with its job and state. They do not carry over.
+        Leave out tool output and file contents; point to where each result lives. When the file is written, answer with the single word: done
+        """
+    }
+
+    static func handoffStart(path: String, from old: String) -> String {
+        "\(housekeeping) You are continuing an earlier session of yours, which Sirius closed because it had grown long. Its handoff brief is at \(path): read it now and carry on from it. Background agents the earlier session started are gone. The earlier session was \(old), should you ever need to search its transcript. When you have read the brief, answer with the single word: ready"
+    }
+
+    // The agent writes the brief; a new process without --resume reads it.
+    // The old session is kept until the new one has answered, and opened
+    // again if it does not.
+    public func rotate() async throws -> Rotation? {
+        guard running != nil, pending == nil, !inTurn, let old = session ?? resumed else { return nil }
+        let began = ContinuousClock.now
+        func milliseconds() -> Int {
+            let elapsed = ContinuousClock.now - began
+            return Int(elapsed.components.seconds * 1000 + elapsed.components.attoseconds / 1_000_000_000_000_000)
+        }
+        func failed(_ reason: String) -> Rotation {
+            Rotation(from: old, to: nil, milliseconds: milliseconds(), outcome: .failed(reason))
+        }
+        let stamp = Date().formatted(.iso8601.year().month().day().time(includingFractionalSeconds: false)
+            .dateSeparator(.dash).timeSeparator(.omitted))
+        let brief = handoffDirectory.appendingPathComponent("\(stamp).md")
+        try? FileManager.default.createDirectory(at: handoffDirectory, withIntermediateDirectories: true)
+
+        let written = try await deliverLine { try ClaudeStream.command(Self.handoffRequest(path: brief.path), uuid: $0) }
+        if case .failed(let reason) = written.outcome { return failed("the handoff brief: \(reason)") }
+        let size = (try? FileManager.default.attributesOfItem(atPath: brief.path))?[.size] as? NSNumber
+        guard let size, size.intValue > 0 else { return failed("no handoff brief was written to \(brief.path)") }
+
+        do {
+            _ = try await open(SessionRequest())
+            let start = try await deliverLine {
+                try ClaudeStream.command(Self.handoffStart(path: brief.path, from: old), uuid: $0)
+            }
+            if case .completed = start.outcome, let new = start.session ?? session, new != old {
+                return Rotation(from: old, to: new, milliseconds: milliseconds())
+            }
+            _ = try await open(SessionRequest(resume: old))
+            if case .failed(let reason) = start.outcome { return failed("the new session: \(reason)") }
+            return failed("the new session did not name itself")
+        } catch is CancellationError {
+            throw CancellationError()
+        } catch {
+            // Back to the old session; if that fails too the queue restarts
+            // the agent from state.json, which still names it.
+            _ = try await open(SessionRequest(resume: old))
+            return failed("the new session: \(error)")
+        }
     }
 
     // Writes the line `make` builds with a fresh uuid as a turn and waits for

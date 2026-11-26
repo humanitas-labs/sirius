@@ -8,6 +8,47 @@ import XCTest
 //   SIRIUS_LIVE_CLAUDE=1 swift test --filter ClaudeLiveTests
 // Shows two real toasts and spends two short model turns.
 final class ClaudeLiveTests: XCTestCase {
+    // Rotation against the real CLI: a turn, then the agent writes its
+    // handoff brief and a new session reads it. Spends four short turns.
+    //   SIRIUS_LIVE_CLAUDE=1 swift test --filter testRotateContinuesInANewSession
+    func testRotateContinuesInANewSession() async throws {
+        guard ProcessInfo.processInfo.environment["SIRIUS_LIVE_CLAUDE"] == "1" else {
+            throw XCTSkip("set SIRIUS_LIVE_CLAUDE=1 to run against the real claude")
+        }
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent("claude-live-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let handoffs = root.appendingPathComponent("handoffs")
+        let registration = AgentRegistration(agent: "dev", name: "Dev", harness: .claudeCode, executable: "",
+                                             root: root.path, model: "claude-haiku-5-5")
+        let adapter = ClaudeAdapter(registration: registration, socketPath: "/nonexistent.sock",
+                                    helpersDirectory: root, named: false, handoffDirectory: handoffs)
+        _ = try await adapter.open(SessionRequest())
+        let first = try await adapter.prompt(Message(id: "m_live1", agent: "dev",
+                                                      text: "A standing rule: the code word is PELICAN. Reply only OK, no tools."))
+        XCTAssertEqual(first.outcome, .completed)
+        let record = await adapter.sessionRecord()
+        print("live: record \(String(describing: record))")
+        XCTAssertGreaterThan(try XCTUnwrap(record).bytes, 0)
+        let rotation = try await adapter.rotate()
+        let done = try XCTUnwrap(rotation)
+        print("live: rotated \(done)")
+        XCTAssertEqual(done.outcome, .completed)
+        XCTAssertEqual(done.from, first.session)
+        XCTAssertNotEqual(done.to, first.session)
+        let briefs = try FileManager.default.contentsOfDirectory(atPath: handoffs.path)
+        XCTAssertEqual(briefs.count, 1)
+        let next = try await adapter.prompt(Message(id: "m_live2", agent: "dev",
+                                                     text: "What is the code word? Reply with the word only, no tools."))
+        XCTAssertEqual(next.outcome, .completed)
+        XCTAssertEqual(next.session, done.to, "the new session carries on")
+        await adapter.close()
+        // The new session's transcript holds the answer.
+        let transcript = try XCTUnwrap(ClaudeAdapter.transcript(session: try XCTUnwrap(done.to),
+                                                                environment: ProcessInfo.processInfo.environment))
+        XCTAssertTrue(try String(contentsOf: transcript, encoding: .utf8).contains("PELICAN"))
+    }
+
     // Consolidation against the real CLI: one short turn, then /compact
     // with the brief; the session carries on. Needs no Sirius.app.
     //   SIRIUS_LIVE_CLAUDE=1 swift test --filter testConsolidateShrinksTheContext
