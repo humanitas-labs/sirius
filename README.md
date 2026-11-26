@@ -37,7 +37,7 @@ Change both shortcuts in **Settings…**. Speech recognition runs on your Mac; t
 
 ## 2. How it works
 
-Each agent is a CLI session Sirius keeps warm in its workspace through a per-harness adapter. The agent reaches you by calling Sirius (the `sirius` command or the `sirius-mcp` server), never by its own output. See [docs/architecture.md](docs/architecture.md) and [docs/byoh.md](docs/byoh.md).
+Each agent is a CLI session Sirius keeps warm in its workspace through a per-harness adapter. The agent reaches you by calling Sirius (the `sirius` command or the `sirius-mcp` server), never by its own output. See [docs/architecture.md](docs/architecture.md), [docs/messages.md](docs/messages.md) for how messages follow each other, and [docs/byoh.md](docs/byoh.md).
 
 ## 3. Build from source
 
